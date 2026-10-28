@@ -1,0 +1,153 @@
+# ===================================================================
+#  DÜŞTÜ MÜ? — İndirim Otomasyonu Ayarları
+#  Bu dosyadaki her şeyi değiştirebilirsin; kod değiştirmen gerekmez.
+# ===================================================================
+
+marka:
+  ad: "DÜŞTÜ MÜ?"
+  instagram_kullanici: "dustu.mu"
+  # Bio'ya koyacağın link sayfasının adresi (GitHub Pages). Kurulumda README'deki gibi doldur.
+  # Örnek: https://kullaniciadin.github.io/dustumu
+  site_url: "https://KULLANICI_ADIN.github.io/dustumu"
+  zaman_dilimi: "Europe/Istanbul"
+
+# -------------------------------------------------------------------
+# İNDİRİM DOĞRULAMA ("doğru indirim" motoru)
+# -------------------------------------------------------------------
+dogrulama:
+  # Gerçek indirim = son 30 günün EN DÜŞÜK fiyatına göre hesaplanır
+  # (Ticaret Bakanlığı'nın indirimli satış kuralıyla aynı mantık).
+  referans_gun: 30
+  # Fiyat geçmişi en az bu kadar farklı günde görülmüşse "Doğrulandı" sayılır.
+  min_gecmis_gun: 3
+  # Doğrulanmış indirimde en az bu kadar düşüş olmalı (%).
+  min_gercek_indirim: 10
+  # Fiyat geçmişi henüz yoksa (yeni ürün), satıcının üstü çizili fiyatına
+  # güvenmek için daha yüksek eşik istenir (%).
+  min_beyan_indirim: 30
+  # Marketler (Migros, ŞOK...) için beyan eşiği (market indirimleri genelde daha düşük oranlıdır).
+  min_beyan_indirim_market: 20
+  # Fiyat geçmişi yokken bundan büyük beyan indirimler şüpheli kabul edilir (%).
+  # Pazaryeri satıcıları liste fiyatını sık şişirdiği için e-ticarette sınır daha sıkı.
+  # (Geçmiş biriktiğinde gerçek indirim, oran ne olursa olsun geçmişle doğrulanır.)
+  max_inandirici_indirim: 70
+  max_inandirici_indirim_eticaret: 55
+  # Ürün fiyatı en az bu kadar TL olmalı (çok ucuz ürünler ilgi çekmez).
+  min_fiyat: 20
+  # Ekranda en az bu kadar TL tasarruf olmalı.
+  min_tasarruf_tl: 15
+
+# -------------------------------------------------------------------
+# KAYNAKLAR — açıp kapatabilirsin
+# -------------------------------------------------------------------
+kaynaklar:
+  # Siteleri yormamak için tam fiyat taraması en fazla bu sıklıkta yapılır (saat).
+  toplama_araligi_saat: 3
+  n11:
+    aktif: true
+    # Bu kelimeler n11'de "indirim oranına göre" aranır.
+    aramalar: ["kulaklık", "akıllı saat", "robot süpürge", "airfryer", "kahve makinesi",
+               "powerbank", "parfüm", "spor ayakkabı", "tablet", "monitör",
+               "oyuncu mouse", "bluetooth hoparlör", "saç kurutma makinesi", "nevresim takımı"]
+    sayfa_basina_bekleme_sn: 4
+  migros:
+    aktif: true
+    kategoriler: ["temel-gida-c-5", "sut-kahvaltilik-c-4", "icecek-c-6", "atistirmalik-c-113fa",
+                  "deterjan-temizlik-c-7", "kisisel-bakim-kozmetik-saglik-c-8", "bebek-c-9",
+                  "elektronik-c-a6", "ev-yasam-c-a"]
+    kategori_basina_sayfa: 2
+    sayfa_basina_bekleme_sn: 3
+  sok:
+    aktif: true
+    sayfalar: ["/indirimli-urunler-cms-pl1"]
+  bim:
+    aktif: true
+  # Trendyol / Hepsiburada / Amazon / A101 bot koruması kullanıyor;
+  # bunları panelden ya da data/manuel_firsatlar.yaml dosyasından ekle.
+  manuel:
+    aktif: true
+
+# -------------------------------------------------------------------
+# AFFILIATE (gelir ortaklığı) — link sonuna eklenecek parametreler
+# {url} = ürün linki. Boş bırakırsan link olduğu gibi kullanılır.
+# -------------------------------------------------------------------
+affiliate:
+  n11: ""            # örn: "{url}?utm_source=dustumu"
+  migros: ""
+  sok: ""
+  bim: ""
+  amazon: ""         # örn: "{url}?tag=SENIN-ETIKETIN-21"
+  # Affiliate link kullanıyorsan Reklam Kurulu kuralı gereği açıklamaya etiket eklenir.
+  aciklama_etiketi: "#işbirliği"
+
+# -------------------------------------------------------------------
+# PAYLAŞIM LİMİTLERİ — hesabın "bot" görünmemesi için
+# Instagram resmi API sınırı 24 saatte 100 gönderidir; biz bunun çok
+# altında, insan gibi davranan bir tempoda kalıyoruz.
+# -------------------------------------------------------------------
+yayin:
+  # true  -> Instagram'a gerçekten paylaşır
+  # false -> sadece görsel + site üretir (deneme modu)
+  instagram_aktif: false
+  # Hesabın açılış tarihi: ilk haftalarda limit otomatik düşük tutulur (ısınma).
+  hesap_acilis: "2026-10-28"
+  isinma_plani:          # hesap yaşı (gün) : günlük maksimum feed gönderisi
+    - {gun: 0,  gonderi: 2}
+    - {gun: 7,  gonderi: 3}
+    - {gun: 14, gonderi: 4}
+    - {gun: 30, gonderi: 6}
+  # Isınma bittikten sonra bile bu sayı aşılmaz.
+  gunluk_max_gonderi: 6
+  gunluk_max_hikaye: 8
+  # İki gönderi arası en az süre (dakika) + rastgele sapma.
+  min_aralik_dk: 120
+  rastgele_sapma_dk: 25
+  # Paylaşım saatleri (İstanbul saati). Dışında hiç paylaşım yapılmaz.
+  aktif_saatler: {baslangic: 8, bitis: 23}
+  # Bu saatlerde paylaşma önceliği verilir (etkileşimin en yüksek olduğu saatler).
+  altin_saatler: [[8, 9], [12, 14], [19, 22]]
+  # true: e-ticaret ürünleri Instagram'a SADECE fiyat geçmişiyle doğrulanınca gider
+  # (pazaryeri satıcılarının "üstü çizili fiyatı" sık şişirilir). İlk ~3 gün e-ticaret
+  # paylaşımı olmaz, sistem fiyat geçmişi biriktirir. Elle eklenenler her zaman gider.
+  eticaret_sadece_dogrulanmis: true
+  # Aynı ürün en erken kaç gün sonra tekrar paylaşılabilir.
+  tekrar_engel_gun: 14
+  # Gönderi başına hashtag sayısı (Instagram 3-5 öneriyor).
+  hashtag_sayisi: 5
+  # Market indirimlerini tek tek değil, carousel (kaydırmalı) olarak topla.
+  market_carousel: true
+  carousel_urun_sayisi: 6
+  # Her pazartesi "Bu hafta market indirim günleri" takvim gönderisi.
+  haftalik_takvim_gonderisi: true
+  # Her feed gönderisinin bir hikâye (story) versiyonunu da paylaş.
+  hikaye_paylas: true
+
+# -------------------------------------------------------------------
+# YORUM -> DM: "LİNK" yazanlara linki DM'den otomatik gönder
+# (Instagram açıklamalarında link tıklanmadığı için en etkili yöntem)
+# -------------------------------------------------------------------
+yorum_dm:
+  aktif: false
+  anahtar_kelimeler: ["link", "lınk", "linki", "nerede", "nereden"]
+  calistirma_basina_max: 25
+
+# -------------------------------------------------------------------
+# TELEGRAM (isteğe bağlı): aynı fırsatlar tıklanabilir linkle kanala da gider,
+# hatalar da sana bildirilir.
+# -------------------------------------------------------------------
+telegram:
+  firsat_kanali_aktif: false
+  hata_bildirimi_aktif: false
+
+# -------------------------------------------------------------------
+# MARKETLERİN HAFTALIK İNDİRİM GÜNLERİ (haftalık takvim gönderisi + site)
+# BİM tarihleri sitesinden otomatik okunur; diğerlerini değişirse buradan güncelle.
+# gun: 0=Pazartesi ... 6=Pazar
+# -------------------------------------------------------------------
+market_gunleri:
+  - {market: a101, gun: 3, baslik: "A101 Aldın Aldın aktüel ürünler"}
+  - {market: sok,  gun: 2, baslik: "ŞOK Çarşamba aktüel ürünler"}
+  - {market: migros, gun: 3, baslik: "Migros haftalık Money indirimleri"}
+
+# Bu kelimeleri içeren ürünler asla paylaşılmaz.
+kara_liste_kelimeler: ["sigara", "alkol", "bira", "şarap", "rakı", "votka", "viski", "tütün", "puro", "yetişkin", "erotik", "silah", "bıçak seti"]

@@ -1,0 +1,93 @@
+# Düştü Mü? botu — GitHub Actions üzerinde ücretsiz çalışır (herkese açık depoda sınırsız dakika).
+# Her 30 dakikada bir uyanır; ne zaman paylaşacağına planlayıcı karar verir
+# (çoğu turda "henüz zamanı değil" deyip kapanır — bu normaldir).
+name: Düştü Mü botu
+
+on:
+  schedule:
+    - cron: "7,37 5-20 * * *"   # UTC 05-20 = İstanbul 08:00-23:59 (tam saatlerde GitHub kuyruğu yoğun olur)
+  workflow_dispatch:
+    inputs:
+      zorla:
+        description: "Saat/limit kontrolü olmadan hemen bir gönderi planla"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write   # durum verisini "veri" dalına kaydetmek için
+  pages: write      # link sayfasını yayınlamak için
+  id-token: write
+
+concurrency:
+  group: dustumu-bot
+  cancel-in-progress: false
+
+jobs:
+  calis:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: github-pages
+      url: ${{ steps.dagit.outputs.page_url }}
+    env:
+      TZ: Europe/Istanbul
+      PYTHONUTF8: "1"
+      IG_USER_ID: ${{ secrets.IG_USER_ID }}
+      IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+      DURUM_ANAHTARI: ${{ secrets.DURUM_ANAHTARI }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_KANAL: ${{ secrets.TELEGRAM_KANAL }}
+      TELEGRAM_SAHIP_ID: ${{ secrets.TELEGRAM_SAHIP_ID }}
+      INSTAGRAM_AKTIF: ${{ vars.INSTAGRAM_AKTIF }}
+      YORUM_DM_AKTIF: ${{ vars.YORUM_DM_AKTIF }}
+      DEPO_URL: https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Durumu geri yükle (veri dalı)
+        run: |
+          if git ls-remote --exit-code --heads origin veri >/dev/null; then
+            git clone -q --depth 1 --branch veri "$DEPO_URL" durum
+          else
+            mkdir -p durum
+          fi
+
+      - id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Topla + doğrula + planla + site
+        env:
+          SITE_URL: ${{ steps.pages.outputs.base_url }}
+        run: python main.py hazirla ${{ inputs.zorla && '--zorla' || '' }}
+
+      - name: Durumu kaydet (yayından önce)
+        run: bash scripts/durum_kaydet.sh
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: durum/site
+
+      - id: dagit
+        uses: actions/deploy-pages@v4
+
+      - name: Instagram'a yayınla
+        env:
+          SITE_URL: ${{ steps.pages.outputs.base_url }}
+        run: python main.py yayinla
+
+      - name: Yorumlara DM ile link gönder
+        if: always()
+        env:
+          SITE_URL: ${{ steps.pages.outputs.base_url }}
+        run: python main.py yorumlar || true
+
+      - name: Durumu kaydet (son)
+        if: always()
+        run: bash scripts/durum_kaydet.sh

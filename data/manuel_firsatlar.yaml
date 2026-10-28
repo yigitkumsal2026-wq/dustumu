@@ -1,0 +1,13 @@
+# Elle eklenen fırsatlar. Alanlar: ad, url, fiyat, eski_fiyat, kaynak, gorsel, bitis (YYYY-AA-GG), affiliate
+# Panelden ("Manuel fırsat ekle") ya da bu dosyayı GitHub'da düzenleyerek ekleyebilirsin.
+# Örnek:
+# firsatlar:
+#   - ad: "Philips Airfryer XL 6.2 L"
+#     url: "https://www.trendyol.com/...?boutiqueId=...&merchantId=..."
+#     kaynak: trendyol
+#     fiyat: 3499
+#     eski_fiyat: 5299
+#     gorsel: "https://cdn.dsmcdn.com/....jpg"
+#     bitis: 2026-11-30
+#     affiliate: true
+firsatlar: []

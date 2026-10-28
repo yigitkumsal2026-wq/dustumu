@@ -1,0 +1,207 @@
+"""Ne zaman, ne paylaşılacağına karar verir.
+
+Hesabın bot gibi görünmemesi için:
+  * Yeni hesapta düşük başlayıp kademeli artan günlük limit (ısınma)
+  * İki gönderi arasında en az X dakika + rastgele sapma (hep aynı dakikada paylaşmaz)
+  * Sadece gündüz saatlerinde; etkileşimin yüksek olduğu "altın saatlere" öncelik
+  * Aynı ürünü N gün içinde tekrar paylaşmaz, içerik türlerini karıştırır
+"""
+from __future__ import annotations
+
+import json
+import logging
+import random
+import sqlite3
+from datetime import date, datetime, timedelta
+
+from . import captions, config, render
+from .calendar_tr import bu_hafta_market, tr_tarih, yaklasan_ozel_gunler
+from .db import kv_al, kv_yaz
+
+log = logging.getLogger(__name__)
+FEED_TURLERI = ("tekli", "carousel", "takvim")
+
+
+def gunluk_limit(bugun: date) -> int:
+    y = config.ayarlar()["yayin"]
+    yas = (bugun - date.fromisoformat(str(y["hesap_acilis"]))).days
+    limit = 1
+    for adim in sorted(y["isinma_plani"], key=lambda a: a["gun"]):
+        if yas >= adim["gun"]:
+            limit = adim["gonderi"]
+    return min(limit, y["gunluk_max_gonderi"])
+
+
+def _bugun_sayisi(c, gun: str, turler) -> int:
+    soru = ",".join("?" * len(turler))
+    return c.execute(f"""SELECT COUNT(*) FROM gonderiler WHERE substr(planlanan,1,10)=? AND tur IN ({soru})
+                         AND durum IN ('planlandi','yayinlandi','deneme')""", (gun, *turler)).fetchone()[0]
+
+
+def _altin_saat(s: datetime) -> bool:
+    return any(a <= s.hour < b for a, b in config.ayarlar()["yayin"]["altin_saatler"])
+
+
+def zaman_uygun_mu(c: sqlite3.Connection, s: datetime, zorla: bool = False) -> tuple[bool, str]:
+    y = config.ayarlar()["yayin"]
+    if zorla:
+        return True, "zorla"
+    if not (y["aktif_saatler"]["baslangic"] <= s.hour < y["aktif_saatler"]["bitis"]):
+        return False, "aktif saat dışında"
+    limit = gunluk_limit(s.date())
+    yapilan = _bugun_sayisi(c, s.date().isoformat(), FEED_TURLERI)
+    if yapilan >= limit:
+        return False, f"günlük limit doldu ({yapilan}/{limit})"
+    sonraki = kv_al(c, "sonraki_uygun")
+    if sonraki and s < datetime.fromisoformat(sonraki):
+        return False, f"bekleme süresi ({sonraki[11:16]}'e kadar)"
+    if not _altin_saat(s):
+        # Altın saat dışında da paylaşır ama seyrek: kalan hak çoksa daha olası.
+        kalan_saat = max(y["aktif_saatler"]["bitis"] - s.hour, 1)
+        olasilik = min(0.9, 0.25 + (limit - yapilan) / kalan_saat)
+        if random.random() > olasilik:
+            return False, "altın saat dışı, bu tur atlandı"
+    return True, "uygun"
+
+
+def _son_paylasilan_urunler(c, gun: int) -> set[str]:
+    sinir = (config.simdi() - timedelta(days=gun)).isoformat()
+    ids: set[str] = set()
+    for r in c.execute("SELECT urunler FROM gonderiler WHERE planlanan>=? AND durum IN ('planlandi','yayinlandi','deneme')",
+                       (sinir,)):
+        ids.update(json.loads(r["urunler"]))
+    return ids
+
+
+def aktif_firsatlar(c: sqlite3.Connection, tur: str | None = None, haric: set[str] | None = None) -> list[dict]:
+    q = """SELECT f.*, u.ad, u.kaynak, u.tur, u.gorsel, u.url, u.gecerlilik, u.bitis, u.kategori
+           FROM firsatlar f JOIN urunler u ON u.id=f.urun_id WHERE f.aktif=1"""
+    sonuc = [dict(r) for r in c.execute(q + " ORDER BY f.puan DESC")]
+    if tur:
+        sonuc = [f for f in sonuc if f["tur"] == tur]
+    if haric:
+        sonuc = [f for f in sonuc if f["urun_id"] not in haric]
+    return sonuc
+
+
+def _kayit(c, tur, firsatlar, gorseller, aciklama, s) -> int:
+    cur = c.execute("""INSERT INTO gonderiler(tur,kodlar,urunler,gorseller,aciklama,durum,planlanan)
+                       VALUES(?,?,?,?,?,'planlandi',?)""",
+                    (tur, json.dumps([f["kod"] for f in firsatlar]), json.dumps([f["urun_id"] for f in firsatlar]),
+                     json.dumps(gorseller), aciklama, s.isoformat(timespec="seconds")))
+    return cur.lastrowid
+
+
+def _dosya(ad: str):
+    return config.GORSEL / ad
+
+
+def _cesitli_sec(adaylar: list[dict], n: int) -> list[dict]:
+    """Aynı mağazadan art arda gelmesin; mağazaları karıştırarak en iyi n ürünü seç."""
+    secilen, kaynak_sayisi = [], {}
+    for f in adaylar:
+        if kaynak_sayisi.get(f["kaynak"], 0) < max(2, n // 2):
+            secilen.append(f)
+            kaynak_sayisi[f["kaynak"]] = kaynak_sayisi.get(f["kaynak"], 0) + 1
+        if len(secilen) == n:
+            break
+    return secilen
+
+
+def planla(c: sqlite3.Connection, zorla: bool = False, bim_katalog: list[dict] | None = None) -> list[int]:
+    """Bu çalıştırmada paylaşılacak gönderileri oluşturur (görselleriyle). Gönderi id'lerini döner."""
+    y = config.ayarlar()["yayin"]
+    s = config.simdi()
+    uygun, neden = zaman_uygun_mu(c, s, zorla)
+    if not uygun:
+        log.info("Bu turda paylaşım yok: %s", neden)
+        return []
+
+    gun = s.date().isoformat()
+    damga = s.strftime("%Y%m%d%H%M")
+    yasak = _son_paylasilan_urunler(c, y["tekrar_engel_gun"])
+    yeni: list[int] = []
+
+    # 1) Pazartesi: haftalık indirim takvimi
+    hafta = s.date().isocalendar()
+    if (y["haftalik_takvim_gonderisi"] and s.weekday() == 0
+            and kv_al(c, "son_takvim_haftasi") != f"{hafta[0]}-{hafta[1]}"):
+        market = bu_hafta_market(s.date(), bim_katalog)
+        ozel = yaklasan_ozel_gunler(s.date(), 30)
+        ad = f"takvim_{damga}.jpg"
+        render.takvim_gorseli(market, ozel, _dosya(ad))
+        yeni.append(_kayit(c, "takvim", [], [ad], captions.takvim(market, ozel), s))
+        kv_yaz(c, "son_takvim_haftasi", f"{hafta[0]}-{hafta[1]}")
+    else:
+        bugun_carousel = c.execute("""SELECT COUNT(*) FROM gonderiler WHERE tur='carousel' AND substr(planlanan,1,10)=?
+                                      AND durum IN ('planlandi','yayinlandi','deneme')""", (gun,)).fetchone()[0]
+        market = aktif_firsatlar(c, "market", yasak)
+        indirimli_market = [f for f in market if f["guven"] != "aktuel"]
+        aktuel = [f for f in market if f["guven"] == "aktuel"
+                  and (f.get("bitis") or "9") >= gun]
+        eticaret = aktif_firsatlar(c, "eticaret", yasak)
+        if y.get("eticaret_sadece_dogrulanmis", True):
+            eticaret = [f for f in eticaret if f["guven"] in ("dogrulandi", "editor")]
+        n = y["carousel_urun_sayisi"]
+
+        # 2) Günde bir market carousel'i (indirimler + yaklaşan aktüeller)
+        if y["market_carousel"] and not bugun_carousel and len(indirimli_market) + len(aktuel) >= 3:
+            secim = _cesitli_sec(indirimli_market, n - 2)
+            secim += _cesitli_sec(sorted(aktuel, key=lambda f: f.get("bitis") or ""), n - len(secim))
+            secim = secim[:n]
+            gorseller = [f"car_{damga}_0.jpg"]
+            render.carousel_kapak(secim, f"{tr_tarih(s.date())} market fırsatları", _dosya(gorseller[0]))
+            for i, f in enumerate(secim, 1):
+                ad = f"car_{damga}_{i}_{f['kod']}.jpg"
+                render.firsat_gorseli(f, _dosya(ad))
+                gorseller.append(ad)
+            aciklama = captions.carousel(secim, f"{tr_tarih(s.date())} — Bugün markette ne düştü?",
+                                         _affiliate_mi(secim))
+            yeni.append(_kayit(c, "carousel", secim, gorseller, aciklama, s))
+        else:
+            # 3) Tekli fırsat: e-ticaret ve market dönüşümlü, en yüksek puanlı
+            son_tur = kv_al(c, "son_tekli_tur", "market")
+            sira = [eticaret, indirimli_market] if son_tur == "market" else [indirimli_market, eticaret]
+            aday = next((l[0] for l in sira if l), None)
+            if not aday:
+                log.info("Paylaşılacak uygun fırsat yok.")
+                return []
+            kv_yaz(c, "son_tekli_tur", aday["tur"])
+            ad = f"tek_{damga}_{aday['kod']}.jpg"
+            render.firsat_gorseli(aday, _dosya(ad))
+            yeni.append(_kayit(c, "tekli", [aday], [ad], captions.tekli(aday, _affiliate_mi([aday])), s))
+            if y["hikaye_paylas"] and _bugun_sayisi(c, gun, ("hikaye",)) < y["gunluk_max_hikaye"]:
+                had = f"hik_{damga}_{aday['kod']}.jpg"
+                render.firsat_gorseli(aday, _dosya(had), hikaye=True)
+                yeni.append(_kayit(c, "hikaye", [aday], [had], "", s))
+
+    bekle = y["min_aralik_dk"] + random.randint(-y["rastgele_sapma_dk"], y["rastgele_sapma_dk"])
+    kv_yaz(c, "sonraki_uygun", (s + timedelta(minutes=bekle)).isoformat(timespec="seconds"))
+    log.info("%d gönderi planlandı, sonraki en erken: +%d dk", len(yeni), bekle)
+    return yeni
+
+
+def tekli_hazirla(c: sqlite3.Connection, kod: int, hikaye: bool = True) -> list[int]:
+    """Panelden seçilen fırsat için, zamanlamaya bakmadan gönderi hazırlar."""
+    f = next((x for x in aktif_firsatlar(c) if x["kod"] == kod), None)
+    if not f:
+        return []
+    s = config.simdi()
+    damga = s.strftime("%Y%m%d%H%M%S")
+    ad = f"tek_{damga}_{kod}.jpg"
+    render.firsat_gorseli(f, _dosya(ad))
+    ids = [_kayit(c, "tekli", [f], [ad], captions.tekli(f, _affiliate_mi([f])), s)]
+    if hikaye and config.ayarlar()["yayin"]["hikaye_paylas"]:
+        had = f"hik_{damga}_{kod}.jpg"
+        render.firsat_gorseli(f, _dosya(had), hikaye=True)
+        ids.append(_kayit(c, "hikaye", [f], [had], "", s))
+    return ids
+
+
+def _affiliate_mi(firsatlar: list[dict]) -> bool:
+    a = config.ayarlar()["affiliate"]
+    if any(a.get(f["kaynak"]) for f in firsatlar):
+        return True
+    from .sources import manuel
+    aff = {k["url"] for k in manuel.oku() if k.get("affiliate")}
+    return any(f.get("url") in aff for f in firsatlar)

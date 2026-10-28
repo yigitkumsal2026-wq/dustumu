@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Düştü Mü? — Gerçek indirimler</title>
+<meta name="description" content="Fiyatı gerçekten düşen ürünler: e-ticaret ve market indirimleri, aktüel günleri. Sahte indirimleri ayıklıyoruz.">
+<meta name="theme-color" content="#FFD60A">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Montserrat:wght@500;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--sari:#FFD60A;--kirmizi:#E63946;--yesil:#16A34A;--zemin:#F6F5F1;--kart:#FFFFFF;--yazi:#111111;--soluk:#6B7280;--cizgi:#E7E5DF}
+@media (prefers-color-scheme:dark){:root{--zemin:#0F0F12;--kart:#1A1A20;--yazi:#F4F4F5;--soluk:#A1A1AA;--cizgi:#2A2A33}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--zemin);color:var(--yazi);font-family:Montserrat,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+header{background:var(--sari);color:#111;padding:22px 16px 18px;position:relative}
+.ic{max-width:980px;margin:0 auto}
+.logo{font-family:Anton,Impact,sans-serif;font-size:44px;letter-spacing:.5px;line-height:1;display:flex;align-items:center;gap:10px}
+.logo svg{width:34px;height:34px}
+.alt-baslik{font-weight:700;margin:8px 0 14px;font-size:15px}
+.ara{display:flex;gap:8px}
+.ara input{flex:1;min-width:0;font:600 17px Montserrat,sans-serif;padding:14px 16px;border-radius:14px;border:3px solid #111;background:#fff;color:#111}
+.ig{display:inline-flex;align-items:center;gap:6px;background:#111;color:var(--sari);font-weight:800;text-decoration:none;padding:0 16px;border-radius:14px;white-space:nowrap}
+nav{display:flex;gap:8px;overflow-x:auto;padding:14px 16px 4px;scrollbar-width:none}
+nav button{flex:none;font:800 14px Montserrat,sans-serif;border:2px solid var(--yazi);background:transparent;color:var(--yazi);padding:9px 14px;border-radius:999px;cursor:pointer}
+nav button[aria-pressed=true]{background:var(--yazi);color:var(--zemin)}
+main{padding:8px 16px 40px}
+h2{font-family:Anton,Impact,sans-serif;font-weight:400;font-size:28px;margin:26px 0 12px;letter-spacing:.3px}
+.izgara{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.k{background:var(--kart);border-radius:20px;overflow:hidden;border:1px solid var(--cizgi);display:flex;flex-direction:column;position:relative}
+.k.hedef{outline:4px solid var(--kirmizi);outline-offset:2px}
+.foto{background:#fff;aspect-ratio:1/1;display:grid;place-items:center;padding:14px;position:relative}
+.foto img{max-width:100%;max-height:100%;object-fit:contain}
+.yuzde{position:absolute;top:10px;right:10px;background:var(--kirmizi);color:#fff;font:400 26px Anton,sans-serif;padding:4px 10px;border-radius:12px;transform:rotate(4deg)}
+.dog{position:absolute;left:10px;top:10px;background:var(--yesil);color:#fff;font-weight:800;font-size:11px;padding:5px 9px;border-radius:999px}
+.govde{padding:12px 14px 14px;display:flex;flex-direction:column;gap:6px;flex:1}
+.ust{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:800}
+.magaza{padding:3px 9px;border-radius:999px}
+.kod{color:var(--soluk)}
+.ad{font-weight:700;font-size:14px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.6em}
+.fiyat{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.yeni{font:400 30px Anton,sans-serif}
+.eski{color:var(--soluk);text-decoration:line-through;font-weight:700}
+.not{font-size:12px;color:var(--soluk);font-weight:600}
+.git{margin-top:auto;display:block;text-align:center;background:var(--yazi);color:var(--zemin);text-decoration:none;font-weight:900;padding:12px;border-radius:12px}
+.git:active{transform:scale(.98)}
+.takvim{display:grid;gap:8px}
+.gun{display:flex;align-items:center;gap:12px;background:var(--kart);border:1px solid var(--cizgi);border-radius:14px;padding:12px 14px;font-weight:700}
+.gun b{min-width:130px}
+.rozet{font-size:12px;font-weight:900;padding:4px 10px;border-radius:999px;white-space:nowrap}
+.sahte{background:var(--kart);border:1px dashed var(--kirmizi);border-radius:14px;padding:12px 14px;font-size:14px;display:flex;justify-content:space-between;gap:12px}
+.sahte s{color:var(--soluk)}
+.bos{color:var(--soluk);font-weight:600;padding:24px 0}
+footer{color:var(--soluk);font-size:12px;line-height:1.6;padding:0 16px 40px}
+.istat{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.istat span{background:#111;color:var(--sari);font-weight:800;font-size:12px;padding:6px 10px;border-radius:999px}
+@media (max-width:520px){.izgara{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.yeni{font-size:24px}.logo{font-size:38px}.gun b{min-width:auto}.gun{flex-wrap:wrap}.ig span{display:none}}
+</style>
+</head>
+<body>
+<header><div class="ic">
+  <div class="logo">DÜŞTÜ MÜ? <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#E63946" d="M8 2h8v10h5l-9 10-9-10h5z"/></svg></div>
+  <div class="alt-baslik">Fiyatı gerçekten düşenler. Sahte indirimleri biz ayıklıyoruz.</div>
+  <div class="ara">
+    <input id="ara" type="search" inputmode="search" placeholder="Fırsat KODU ya da ürün ara…" aria-label="Fırsat kodu veya ürün ara">
+    <a class="ig" id="iglink" href="#" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/></svg><span>Takip et</span></a>
+  </div>
+  <div class="istat" id="istat"></div>
+</div></header>
+<nav class="ic" id="filtre" aria-label="Filtre">
+  <button data-f="hepsi" aria-pressed="true">Tümü</button>
+  <button data-f="paylasildi" aria-pressed="false">Instagram'da paylaşılan</button>
+  <button data-f="dogrulandi" aria-pressed="false">✓ Gerçek indirim</button>
+  <button data-f="eticaret" aria-pressed="false">E-ticaret</button>
+  <button data-f="market" aria-pressed="false">Market</button>
+  <button data-f="aktuel" aria-pressed="false">Aktüel</button>
+</nav>
+<main class="ic">
+  <section><h2 id="liste-baslik">GÜNCEL FIRSATLAR</h2><div class="izgara" id="liste"></div><div class="bos" id="bos" hidden>Aramana uygun fırsat yok. Kodu doğru yazdığından emin ol; süresi dolmuş olabilir.</div></section>
+  <section><h2>BU HAFTA MARKET İNDİRİM GÜNLERİ</h2><div class="takvim" id="takvim"></div></section>
+  <section id="ozel-bolum"><h2>YAKLAŞAN BÜYÜK İNDİRİMLER</h2><div class="takvim" id="ozel"></div></section>
+  <section id="sahte-bolum"><h2>YAKALANAN SAHTE İNDİRİMLER</h2><p class="not">Satıcı "büyük indirim" diyor ama son 30 günde fiyat zaten bu seviyedeydi. Bunları paylaşmıyoruz.</p><div class="takvim" id="sahte"></div></section>
+</main>
+<footer class="ic">
+  <p>Fiyatlar ilgili mağazalardan otomatik alınır ve <b id="guncelleme"></b> itibarıyladır; stok ve fiyatlar değişebilir, satın almadan önce mağazada kontrol et. "Gerçek indirim" etiketi, ürünün bugünkü fiyatının bizim kaydettiğimiz son 30 günün en düşük fiyatından da düşük olduğunu gösterir. Bazı bağlantılar gelir ortaklığı (affiliate) bağlantısı olabilir; bu sana ek maliyet getirmez.</p>
+</footer>
+<script>
+const V = __VERI__;
+const $ = s => document.querySelector(s);
+const tl = x => (Math.abs(x - Math.round(x)) < .005 ? Math.round(x).toLocaleString('tr-TR') : x.toLocaleString('tr-TR', {minimumFractionDigits: 2, maximumFractionDigits: 2})) + ' TL';
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const trk = s => s.toLocaleLowerCase('tr-TR');
+let filtre = 'hepsi';
+try { filtre = localStorage.getItem('dm_filtre') || 'hepsi'; } catch (e) {}
+
+$('#iglink').href = 'https://www.instagram.com/' + V.instagram + '/';
+$('#guncelleme').textContent = V.guncelleme;
+const ist = V.istatistik || {};
+$('#istat').innerHTML = [
+  `${V.firsatlar.length} aktif fırsat`,
+  ist.incelenen ? `${ist.incelenen.toLocaleString('tr-TR')} fiyat incelendi` : '',
+  ist.sahte ? `${ist.sahte} sahte indirim elendi` : '',
+].filter(Boolean).map(t => `<span>${t}</span>`).join('');
+
+function kart(f, hedef) {
+  const ind = f.guven !== 'aktuel' && f.eski > f.fiyat;
+  return `<article class="k${hedef ? ' hedef' : ''}" id="k${f.kod}">
+    <div class="foto">
+      <img src="${esc(f.gorsel)}" alt="${esc(f.ad)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.visibility='hidden'">
+      ${ind ? `<span class="yuzde">%${f.indirim}</span>` : `<span class="yuzde" style="font-size:18px">AKTÜEL</span>`}
+      ${f.guven === 'dogrulandi' ? '<span class="dog">✓ GERÇEK İNDİRİM</span>' : ''}
+    </div>
+    <div class="govde">
+      <div class="ust"><span class="magaza" style="background:${f.renk[0]};color:${f.renk[1]}">${esc(f.kaynak)}</span><span class="kod">KOD ${f.kod}</span></div>
+      <div class="ad">${esc(f.ad)}</div>
+      <div class="fiyat"><span class="yeni">${tl(f.fiyat)}</span>${ind ? `<span class="eski">${tl(f.eski)}</span>` : ''}</div>
+      ${f.gecerlilik ? `<div class="not">${esc(f.gecerlilik)}</div>` : ''}
+      <a class="git" href="${esc(f.link)}" target="_blank" rel="nofollow sponsored noopener">Fırsata git →</a>
+    </div></article>`;
+}
+
+function ciz() {
+  const q = trk($('#ara').value.trim().replace(/^#|^kod\s*/i, ''));
+  const kodMu = /^\d+$/.test(q);
+  let l = V.firsatlar.filter(f => {
+    if (q) return kodMu ? String(f.kod) === q : trk(f.ad + ' ' + f.kaynak).includes(q);
+    if (filtre === 'hepsi') return true;
+    if (filtre === 'paylasildi') return f.paylasildi;
+    if (filtre === 'aktuel') return f.guven === 'aktuel';
+    if (filtre === 'dogrulandi') return f.guven === 'dogrulandi';
+    return f.tur === filtre;
+  });
+  $('#liste').innerHTML = l.slice(0, 120).map(f => kart(f, kodMu)).join('');
+  $('#bos').hidden = l.length > 0;
+  document.querySelectorAll('#filtre button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.f === filtre && !q)));
+}
+
+$('#ara').addEventListener('input', ciz);
+$('#filtre').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  filtre = b.dataset.f; $('#ara').value = '';
+  try { localStorage.setItem('dm_filtre', filtre); } catch (e) {}
+  ciz();
+});
+
+$('#takvim').innerHTML = V.takvim.map(t => `<div class="gun"><b>${esc(t.tarih)}</b><span class="rozet" style="background:${t.renk[0]};color:${t.renk[1]}">${esc(t.market)}</span><span>${esc(t.baslik)}</span></div>`).join('');
+if (V.ozel.length) $('#ozel').innerHTML = V.ozel.map(o => `<div class="gun"><b>${esc(o.tarih)}</b><span>${esc(o.ad)}</span><span class="rozet" style="background:#111;color:#FFD60A;margin-left:auto">${o.kalan ? o.kalan + ' gün' : 'BUGÜN'}</span></div>`).join('');
+else $('#ozel-bolum').hidden = true;
+if (V.sahte.length) $('#sahte').innerHTML = V.sahte.map(s => `<div class="sahte"><span>${esc(s.ad)}</span><span style="white-space:nowrap">"%${s.beyan} indirim" <s>${s.liste ? tl(s.liste) : ''}</s> → ${tl(s.fiyat)}</span></div>`).join('');
+else $('#sahte-bolum').hidden = true;
+
+// /#123 ile gelinirse kodu ara
+const h = decodeURIComponent(location.hash.slice(1));
+if (/^\d+$/.test(h)) $('#ara').value = h;
+ciz();
+</script>
+</body>
+</html>
