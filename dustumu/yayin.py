@@ -53,7 +53,10 @@ def bekleyenleri_yayinla(c) -> dict:
         simdi = config.simdi().isoformat(timespec="seconds")
         if not y["instagram_aktif"]:
             c.execute("UPDATE gonderiler SET durum='deneme', yayin_zamani=? WHERE id=?", (simdi, g["id"]))
+            c.commit()
             sonuc["deneme"] += 1
+            if telegram.taslak_gonder([config.GORSEL / a for a in gorseller], g["tur"], g["aciklama"]):
+                sonuc["taslak"] = sonuc.get("taslak", 0) + 1
             continue
         try:
             urller = [_url(a) for a in gorseller]

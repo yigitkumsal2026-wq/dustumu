@@ -137,7 +137,10 @@ yorum_dm:
 # -------------------------------------------------------------------
 telegram:
   firsat_kanali_aktif: false
-  hata_bildirimi_aktif: false
+  hata_bildirimi_aktif: true
+  # Yarı otomatik mod: instagram_aktif=false iken hazır görseller + açıklama
+  # TELEGRAM_SAHIP_ID'ye gönderilir, sen elle paylaşırsın.
+  taslak_aktif: true
 
 # -------------------------------------------------------------------
 # MARKETLERİN HAFTALIK İNDİRİM GÜNLERİ (haftalık takvim gönderisi + site)
