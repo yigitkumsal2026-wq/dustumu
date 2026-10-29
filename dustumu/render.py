@@ -163,6 +163,15 @@ def _indirim_cikartmasi(img, merkez, r, metin, renk, aci=-12, ust_yazi="İNDİR�
     img.alpha_composite(s, (merkez[0] - s.width // 2, merkez[1] - s.height // 2))
 
 
+def son_gun(f: dict) -> str | None:
+    """Kesin bitiş tarihi varsa '3 KASIM' biçiminde döner (aktüelde bitiş tahmini olduğundan yok)."""
+    if not f.get("bitis") or f["guven"] == "aktuel":
+        return None
+    from datetime import date
+    from .calendar_tr import tr_tarih
+    return tr_tarih(date.fromisoformat(str(f["bitis"])[:10]), False).replace("i", "İ").upper()
+
+
 # ------------------------------------------------------------------ tekli fırsat
 def firsat_gorseli(f: dict, hedef: Path, hikaye: bool = False, reklam_degil: bool = True) -> Path:
     """f: fırsat sözlüğü (kod, ad, fiyat, eski_fiyat, indirim, guven, kaynak, gorsel, gecerlilik)."""
@@ -207,6 +216,12 @@ def firsat_gorseli(f: dict, hedef: Path, hikaye: bool = False, reklam_degil: boo
         fr = font("black", 28)
         kutu = _rozet(d, pad + 28, kart_y + 28, "     " + metin, YESIL, "#FFFFFF", fr, pad=(22, 12))
         _tik(d, kutu[0] + 22, kutu[1] + 14, 30, "#FFFFFF", 6)
+
+    # Bitiş tarihi (sadece kesin bilinen tarih; aktüelde bitiş tahminidir, gösterilmez)
+    son = son_gun(f)
+    if son:
+        y_son = kart_y + 28 + (76 if f["guven"] in ("dogrulandi", "editor") else 0)
+        _rozet(d, pad + 28, y_son, f"SON GÜN: {son}", "#E63946", "#FFFFFF", font("black", 28), pad=(22, 12))
 
     # Tasarruf şeridi (kartın sol altı)
     tasarruf = f["eski_fiyat"] - f["fiyat"]
@@ -267,16 +282,27 @@ def firsat_gorseli(f: dict, hedef: Path, hikaye: bool = False, reklam_degil: boo
 
 
 # ------------------------------------------------------------------ market carousel kapağı
-def carousel_kapak(firsatlar: list[dict], baslik_tarih: str, hedef: Path) -> Path:
-    tema = TEMALAR[0]
-    img = _gradyan(W, H, "#FFD60A", "#FF9F1C").convert("RGBA")
+KAPAK_TEMALAR = [
+    {"ust": "#FFD60A", "alt": "#FF9F1C", "yazi": "#111111", "vurgu": "#E63946"},
+    {"ust": "#FF3B30", "alt": "#B5121B", "yazi": "#FFFFFF", "vurgu": "#FFD60A"},
+    {"ust": "#7B2FF7", "alt": "#4C1D95", "yazi": "#FFFFFF", "vurgu": "#FFD60A"},
+    {"ust": "#00C2A8", "alt": "#00796B", "yazi": "#0B0B0B", "vurgu": "#FFFFFF"},
+    {"ust": "#2563EB", "alt": "#1E3A8A", "yazi": "#FFFFFF", "vurgu": "#FFD60A"},
+    {"ust": "#FF4D8D", "alt": "#C2185B", "yazi": "#FFFFFF", "vurgu": "#FFE14D"},
+    {"ust": "#1F1F1F", "alt": "#000000", "yazi": "#FFFFFF", "vurgu": "#FFD60A"},
+]
+
+
+def carousel_kapak(firsatlar: list[dict], baslik_tarih: str, hedef: Path, renk: int = 0) -> Path:
+    tema = KAPAK_TEMALAR[renk % len(KAPAK_TEMALAR)]
+    img = _gradyan(W, H, tema["ust"], tema["alt"]).convert("RGBA")
     d = ImageDraw.Draw(img)
     pad = 64
-    _logo(d, pad, 56, "#111111", 58)
-    d.text((pad, 190), "BUGÜN", font=font("anton", 150), fill="#111111")
-    d.text((pad, 350), "MARKETTE", font=font("anton", 150), fill="#111111")
+    _logo(d, pad, 56, tema["yazi"], 58, tema["vurgu"])
+    d.text((pad, 190), "BUGÜN", font=font("anton", 150), fill=tema["yazi"])
+    d.text((pad, 350), "MARKETTE", font=font("anton", 150), fill=tema["yazi"])
     d.text((pad, 510), "NE DÜŞTÜ?", font=font("anton", 150), fill=tema["vurgu"])
-    d.text((pad, 700), baslik_tarih.upper(), font=font("black", 40), fill="#111111")
+    d.text((pad, 700), baslik_tarih.upper(), font=font("black", 40), fill=tema["yazi"])
 
     # Küçük ürün önizlemeleri
     n = min(3, len(firsatlar))
@@ -289,7 +315,7 @@ def carousel_kapak(firsatlar: list[dict], baslik_tarih: str, hedef: Path) -> Pat
             img.alpha_composite(u, (x + (kw - u.width) // 2, 780 + (kw - u.height) // 2))
         d = ImageDraw.Draw(img)
         if f["guven"] != "aktuel":
-            _rozet(d, x + 14, 794, f"%{int(f['indirim'])}", tema["vurgu"], "#FFFFFF", font("anton", 40), pad=(16, 6))
+            _rozet(d, x + 14, 794, f"%{int(f['indirim'])}", "#E63946", "#FFFFFF", font("anton", 40), pad=(16, 6))
 
     marketler = list(dict.fromkeys(f["kaynak"] for f in firsatlar))
     x = pad
@@ -299,7 +325,7 @@ def carousel_kapak(firsatlar: list[dict], baslik_tarih: str, hedef: Path) -> Pat
         x = k[2] + 16
     f_k = font("black", 40)
     kay = "KAYDIR  >>>"
-    d.text((W - pad - d.textlength(kay, font=f_k), 1240), kay, font=f_k, fill="#111111")
+    d.text((W - pad - d.textlength(kay, font=f_k), 1240), kay, font=f_k, fill=tema["yazi"])
     img.convert("RGB").save(hedef, "JPEG", quality=92, optimize=True)
     return hedef
 

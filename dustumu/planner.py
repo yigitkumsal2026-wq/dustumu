@@ -162,7 +162,9 @@ def planla(c: sqlite3.Connection, zorla: bool = False, bim_katalog: list[dict] |
         if y["market_carousel"] and len(secim) >= 3:
             aff = _affiliate_mi(secim)
             gorseller = [f"car_{damga}_0.jpg"]
-            render.carousel_kapak(secim, f"{tr_tarih(s.date())} · {len(secim)} fırsat", _dosya(gorseller[0]))
+            renk = int(kv_al(c, "kapak_renk", "0")) + 1  # her kapak bir sonraki renkte (0=sarı, ilk kapakta kullanıldı)
+            kv_yaz(c, "kapak_renk", str(renk))
+            render.carousel_kapak(secim, f"{tr_tarih(s.date())} · {len(secim)} fırsat", _dosya(gorseller[0]), renk)
             for i, f in enumerate(secim, 1):
                 ad = f"car_{damga}_{i}_{f['kod']}.jpg"
                 render.firsat_gorseli(f, _dosya(ad), reklam_degil=not aff)

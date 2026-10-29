@@ -5,8 +5,17 @@ from __future__ import annotations
 import random
 
 from . import config
-from .render import para
+from .render import para, son_gun
 from .sources import KAYNAK_ADLARI
+
+
+def _son_gun(f: dict) -> str | None:
+    """'3 Kasım' (aktüelde bitiş tahmini olduğundan yok)."""
+    if not son_gun(f):
+        return None
+    from datetime import date
+    from .calendar_tr import tr_tarih
+    return tr_tarih(date.fromisoformat(str(f["bitis"])[:10]), False)
 
 GIRISLER = [
     "🔻 %{i} DÜŞTÜ! {ad}",
@@ -70,6 +79,8 @@ def tekli(f: dict, affiliate: bool = False) -> str:
     else:
         giris = random.choice(GIRISLER).format(i=int(f["indirim"]), ad=f["ad"], t=t)
         fiyat = [f"❌ {para(f['eski_fiyat'])} TL → ✅ {para(f['fiyat'])} TL", f"💰 {t} TL tasarruf (%{int(f['indirim'])})"]
+        if _son_gun(f):
+            fiyat.append(f"⏳ Son gün: {_son_gun(f)}")
     satirlar = [giris, "", *fiyat, GUVEN_SATIRI[f["guven"]], f"🏪 {m}", "", *_link_satirlari(),
                 "📌 Kaydet, ihtiyacı olan arkadaşını etiketle!", *_alt_bilgi(affiliate), "",
                 _etiketler([f["kaynak"]])]
@@ -84,7 +95,7 @@ def carousel(firsatlar: list[dict], baslik: str, affiliate: bool = False) -> str
             satirlar.append(f"• {f['ad']} — {para(f['fiyat'])} TL ({m})")
         else:
             satirlar.append(f"• {f['ad']} — {para(f['eski_fiyat'])} → {para(f['fiyat'])} TL "
-                            f"(%{int(f['indirim'])}, {m})")
+                            f"(%{int(f['indirim'])}, {m})" + (f" · son gün {_son_gun(f)}" if _son_gun(f) else ""))
     satirlar += ["", *_link_satirlari(), "📌 Kaydet, alışverişe çıkmadan bak!", *_alt_bilgi(affiliate), "",
                  _etiketler(list(dict.fromkeys(f["kaynak"] for f in firsatlar)), ["#marketindirimleri"])]
     return "\n".join(satirlar)
