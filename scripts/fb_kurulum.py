@@ -56,6 +56,9 @@ def _tarayicidan_token(app_id: str, gizli: str) -> str:
     class Yakala(BaseHTTPRequestHandler):
         def do_GET(self):
             q = {k: v[0] for k, v in parse_qs(urlparse(self.path).query).items()}
+            if "error_message" in q:  # Facebook bazen hatayı bu adlarla döner
+                q.setdefault("error", q.get("error_code", "hata"))
+                q.setdefault("error_description", q["error_message"])
             if "code" in q or "error" in q:
                 sonuc.update(q)
             self.send_response(200)
