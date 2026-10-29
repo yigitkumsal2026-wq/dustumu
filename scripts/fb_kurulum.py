@@ -3,7 +3,7 @@
 .env dosyasına şu üçünü yaz, sonra:  python scripts/fb_kurulum.py
     FB_APP_ID=        (Uygulama ayarları > Temel > Uygulama Kimliği)
     FB_APP_SECRET=    (aynı yer > Uygulama Gizli Anahtarı)
-    FB_KISA_TOKEN=    (Graph API Gezgini'nden alınan kullanıcı token'ı)
+    FB_KISA_TOKEN=    (isteğe bağlı; boşsa betik Facebook giriş penceresini açar)
 
 Kısa ömürlü token -> uzun ömürlü kullanıcı token'ı -> SÜRESİZ sayfa token'ı.
 Sayfaya bağlı Instagram hesabını bulur, GitHub secret/variable'larını gh ile kaydeder.
@@ -38,10 +38,55 @@ def _gh(*args: str, girdi: str | None = None) -> None:
     subprocess.run([GH, *args], input=girdi, text=True, check=True, cwd=KOK)
 
 
+IZINLER = "instagram_basic,instagram_content_publish,pages_show_list,pages_read_engagement,business_management"
+PORT = 8765
+
+
+def _tarayicidan_token(app_id: str, gizli: str) -> str:
+    """FB_KISA_TOKEN yoksa: Facebook giriş penceresini açar, dönen kodu yerel sunucuda yakalar."""
+    import secrets
+    import webbrowser
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+    from urllib.parse import parse_qs, urlencode, urlparse
+
+    geri = f"http://localhost:{PORT}/"
+    durum = secrets.token_urlsafe(16)
+    sonuc: dict = {}
+
+    class Yakala(BaseHTTPRequestHandler):
+        def do_GET(self):
+            q = {k: v[0] for k, v in parse_qs(urlparse(self.path).query).items()}
+            if "code" in q or "error" in q:
+                sonuc.update(q)
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.end_headers()
+            mesaj = "Tamam! Bu sekmeyi kapatabilirsin." if "code" in q else f"Hata: {q.get('error_description', q)}"
+            self.wfile.write(f"<h2 style='font-family:sans-serif'>{mesaj}</h2>".encode())
+
+        def log_message(self, *a):
+            pass
+
+    sunucu = HTTPServer(("localhost", PORT), Yakala)
+    url = "https://www.facebook.com/" + config.env("IG_API_VERSION", "v23.0") + "/dialog/oauth?" + urlencode(
+        {"client_id": app_id, "redirect_uri": geri, "scope": IZINLER, "state": durum, "response_type": "code"})
+    print("Tarayıcıda Facebook açılıyor; Devam et de, Düştü Mü? sayfasını ve @dustu.mu'yu seç.")
+    webbrowser.open(url)
+    while not sonuc:
+        sunucu.handle_request()
+    sunucu.server_close()
+    if "error" in sonuc or sonuc.get("state") != durum:
+        sys.exit(f"Giriş tamamlanmadı: {sonuc.get('error_description') or sonuc.get('error') or 'state uyuşmadı'}")
+    return _get("oauth/access_token", client_id=app_id, client_secret=gizli,
+                redirect_uri=geri, code=sonuc["code"])["access_token"]
+
+
 def main() -> int:
     app_id, gizli, kisa = (config.env(a) for a in ("FB_APP_ID", "FB_APP_SECRET", "FB_KISA_TOKEN"))
-    if not (app_id and gizli and kisa):
-        sys.exit(".env içinde FB_APP_ID, FB_APP_SECRET ve FB_KISA_TOKEN dolu olmalı.")
+    if not (app_id and gizli):
+        sys.exit(".env içinde FB_APP_ID ve FB_APP_SECRET dolu olmalı.")
+    if not kisa:
+        kisa = _tarayicidan_token(app_id, gizli)
 
     uzun = _get("oauth/access_token", grant_type="fb_exchange_token", client_id=app_id,
                 client_secret=gizli, fb_exchange_token=kisa)["access_token"]

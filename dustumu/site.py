@@ -82,6 +82,9 @@ def olustur(c) -> None:
     (config.SITE / ".nojekyll").write_text("", encoding="utf-8")
     (config.SITE / "robots.txt").write_text("User-agent: *\nDisallow: /k/\nDisallow: /hazir/\n", encoding="utf-8")
     hazir_sayfasi(c)
+    for p in (config.KOK / "dustumu" / "sayfalar").glob("*.html"):  # gizlilik, koşullar, veri silme
+        (config.SITE / p.stem).mkdir(exist_ok=True)
+        shutil.copyfile(p, config.SITE / p.stem / "index.html")
     gorselleri_temizle()
 
 
