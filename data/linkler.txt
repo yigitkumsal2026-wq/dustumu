@@ -5,3 +5,4 @@
 # sayfalarını otomatik okumaya izin vermiyor, onları manuel_firsatlar.yaml'a elle yaz.
 # "#" ile başlayan satırlar açıklamadır, dikkate alınmaz.
 
+https://www.trendyol.com/kiko/glossy-lip-set-dudak-parlaticisi-seti-p-307859093?boutiqueId=61&merchantId=387700

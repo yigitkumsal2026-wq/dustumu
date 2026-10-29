@@ -17,6 +17,7 @@ from datetime import date, datetime, timedelta
 from . import captions, config, render
 from .calendar_tr import bu_hafta_market, tr_tarih, yaklasan_ozel_gunler
 from .db import kv_al, kv_yaz
+from .sources import KAYNAK_ADLARI
 
 log = logging.getLogger(__name__)
 FEED_TURLERI = ("tekli", "carousel", "takvim")
@@ -101,15 +102,17 @@ def _urun_ailesi(ad: str) -> str:
     return " ".join(ad.lower().split()[:2])
 
 
-def _cesitli_sec(adaylar: list[dict], n: int, haric: list[dict] | None = None) -> list[dict]:
+def _cesitli_sec(adaylar: list[dict], n: int, haric: list[dict] | None = None,
+                 kaynak_siniri: int | None = None) -> list[dict]:
     """Aynı mağazadan/aynı ürünün renk-koku çeşitlerinden yığılmasın; en iyi n ürünü seç."""
     secilen, kaynak_sayisi = [], {}
     aileler = {_urun_ailesi(f["ad"]) for f in haric or []}
+    sinir = kaynak_siniri or max(2, n // 2)
     for f in adaylar:
         aile = _urun_ailesi(f["ad"])
         if aile in aileler:
             continue
-        if kaynak_sayisi.get(f["kaynak"], 0) < max(2, n // 2):
+        if kaynak_sayisi.get(f["kaynak"], 0) < sinir:
             secilen.append(f)
             aileler.add(aile)
             kaynak_sayisi[f["kaynak"]] = kaynak_sayisi.get(f["kaynak"], 0) + 1
@@ -152,24 +155,40 @@ def planla(c: sqlite3.Connection, zorla: bool = False, bim_katalog: list[dict] |
             eticaret = [f for f in eticaret if f["guven"] in ("dogrulandi", "editor")]
         n = y["carousel_urun_sayisi"]
 
-        # 2) Çok fırsatlı carousel (indirimler + e-ticaret + yaklaşan aktüeller); yeterli aday yoksa tekli
-        indirimli = sorted(indirimli_market + eticaret, key=lambda f: -f["puan"])
-        secim = _cesitli_sec(indirimli, n - 2)
-        secim += _cesitli_sec(sorted(aktuel, key=lambda f: f.get("bitis") or ""), n - len(secim), secim)
-        if len(secim) < n:
-            secim += _cesitli_sec(indirimli, n - len(secim), secim)
+        # 2) Çok fırsatlı carousel. Online (Trendyol linkleri vb.) en az 3 birikince kendi gönderisinde
+        #    toplanır; yoksa market indirimleri + yaklaşan aktüeller. Yeterli aday yoksa tekli.
+        online = sorted(eticaret, key=lambda f: -f["puan"])
+        if len(online) >= 3:
+            secim = _cesitli_sec(online, n, kaynak_siniri=n)
+            magazalar = {f["kaynak"] for f in secim}
+            if len(magazalar) == 1:
+                yer = KAYNAK_ADLARI.get(next(iter(magazalar)), "İnternet")
+                yer_ek = f"{yer}'{'de' if yer.lower().endswith(('11', 'e', 'i')) else 'da'}"
+            else:
+                yer_ek = "İnternette"
+            kapak_satirlari = ("BUGÜN", yer_ek.replace("i", "İ").upper(), "NE DÜŞTÜ?")
+            baslik = f"Bugün {yer_ek} ne düştü?"
+        else:
+            indirimli = sorted(indirimli_market, key=lambda f: -f["puan"])
+            secim = _cesitli_sec(indirimli, n - 2)
+            secim += _cesitli_sec(sorted(aktuel, key=lambda f: f.get("bitis") or ""), n - len(secim), secim)
+            if len(secim) < n:
+                secim += _cesitli_sec(indirimli, n - len(secim), secim)
+            kapak_satirlari = ("BUGÜN", "MARKETTE", "NE DÜŞTÜ?")
+            baslik = "Bugün ne düştü?"
         secim = secim[:n]
         if y["market_carousel"] and len(secim) >= 3:
             aff = _affiliate_mi(secim)
             gorseller = [f"car_{damga}_0.jpg"]
             renk = int(kv_al(c, "kapak_renk", "0")) + 1  # her kapak bir sonraki renkte (0=sarı, ilk kapakta kullanıldı)
             kv_yaz(c, "kapak_renk", str(renk))
-            render.carousel_kapak(secim, f"{tr_tarih(s.date())} · {len(secim)} fırsat", _dosya(gorseller[0]), renk)
+            render.carousel_kapak(secim, f"{tr_tarih(s.date())} · {len(secim)} fırsat", _dosya(gorseller[0]), renk,
+                                  kapak_satirlari)
             for i, f in enumerate(secim, 1):
                 ad = f"car_{damga}_{i}_{f['kod']}.jpg"
                 render.firsat_gorseli(f, _dosya(ad), reklam_degil=not aff)
                 gorseller.append(ad)
-            aciklama = captions.carousel(secim, f"{tr_tarih(s.date())} — Bugün ne düştü?", aff)
+            aciklama = captions.carousel(secim, f"{tr_tarih(s.date())} — {baslik}", aff)
             yeni.append(_kayit(c, "carousel", secim, gorseller, aciklama, s))
             if y["hikaye_paylas"] and _bugun_sayisi(c, gun, ("hikaye",)) < y["gunluk_max_hikaye"]:
                 had = f"hik_{damga}_{secim[0]['kod']}.jpg"

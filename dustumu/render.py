@@ -293,15 +293,15 @@ KAPAK_TEMALAR = [
 ]
 
 
-def carousel_kapak(firsatlar: list[dict], baslik_tarih: str, hedef: Path, renk: int = 0) -> Path:
+def carousel_kapak(firsatlar: list[dict], baslik_tarih: str, hedef: Path, renk: int = 0,
+                   satirlar: tuple[str, str, str] = ("BUGÜN", "MARKETTE", "NE DÜŞTÜ?")) -> Path:
     tema = KAPAK_TEMALAR[renk % len(KAPAK_TEMALAR)]
     img = _gradyan(W, H, tema["ust"], tema["alt"]).convert("RGBA")
     d = ImageDraw.Draw(img)
     pad = 64
     _logo(d, pad, 56, tema["yazi"], 58, tema["vurgu"])
-    d.text((pad, 190), "BUGÜN", font=font("anton", 150), fill=tema["yazi"])
-    d.text((pad, 350), "MARKETTE", font=font("anton", 150), fill=tema["yazi"])
-    d.text((pad, 510), "NE DÜŞTÜ?", font=font("anton", 150), fill=tema["vurgu"])
+    for (y, metin), dolgu in zip(zip((190, 350, 510), satirlar), (tema["yazi"], tema["yazi"], tema["vurgu"])):
+        d.text((pad, y), metin, font=_sigdir(d, metin, "anton", 150, W - pad * 2), fill=dolgu)
     d.text((pad, 700), baslik_tarih.upper(), font=font("black", 40), fill=tema["yazi"])
 
     # Küçük ürün önizlemeleri

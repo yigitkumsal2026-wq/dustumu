@@ -97,7 +97,7 @@ def carousel(firsatlar: list[dict], baslik: str, affiliate: bool = False) -> str
             satirlar.append(f"• {f['ad']} — {para(f['eski_fiyat'])} → {para(f['fiyat'])} TL "
                             f"(%{int(f['indirim'])}, {m})" + (f" · son gün {_son_gun(f)}" if _son_gun(f) else ""))
     satirlar += ["", *_link_satirlari(), "📌 Kaydet, alışverişe çıkmadan bak!", *_alt_bilgi(affiliate), "",
-                 _etiketler(list(dict.fromkeys(f["kaynak"] for f in firsatlar)), ["#marketindirimleri"])]
+                 _etiketler(list(dict.fromkeys(f["kaynak"] for f in firsatlar)), ["#marketindirimleri"] if any(f["tur"] == "market" for f in firsatlar) else ["#onlinealışveriş"])]
     return "\n".join(satirlar)
 
 
