@@ -80,8 +80,30 @@ def olustur(c) -> None:
     }, ensure_ascii=False).replace("</", "<\\/")))
     (config.SITE / "index.html").write_text(sayfa, encoding="utf-8")
     (config.SITE / ".nojekyll").write_text("", encoding="utf-8")
-    (config.SITE / "robots.txt").write_text("User-agent: *\nDisallow: /k/\n", encoding="utf-8")
+    (config.SITE / "robots.txt").write_text("User-agent: *\nDisallow: /k/\nDisallow: /hazir/\n", encoding="utf-8")
+    hazir_sayfasi(c)
     gorselleri_temizle()
+
+
+def hazir_sayfasi(c, gun: int = 3) -> None:
+    """Yarı otomatik mod: elle paylaşılacak gönderiler (görsel indir + açıklama kopyala)."""
+    sinir = (config.simdi() - timedelta(days=gun)).isoformat(timespec="seconds")
+    gonderiler = []
+    for g in c.execute("""SELECT id, tur, gorseller, aciklama, planlanan FROM gonderiler
+                          WHERE durum IN ('planlandi','deneme') AND planlanan>=? ORDER BY planlanan DESC LIMIT 20""",
+                       (sinir,)):
+        gorseller = [a for a in json.loads(g["gorseller"]) if (config.GORSEL / a).exists()]
+        if gorseller:
+            gonderiler.append({"id": g["id"], "tur": g["tur"], "gorseller": gorseller,
+                               "aciklama": "" if g["tur"] == "hikaye" else g["aciklama"],
+                               "planlanan": g["planlanan"]})
+    sayfa = (config.KOK / "dustumu" / "hazir_sablon.html").read_text(encoding="utf-8")
+    sayfa = sayfa.replace("__VERI__", json.dumps({
+        "gonderiler": gonderiler, "guncelleme": config.simdi().strftime("%d.%m.%Y %H:%M"),
+    }, ensure_ascii=False).replace("</", "<\\/"))
+    klasor = config.SITE / "hazir"
+    klasor.mkdir(parents=True, exist_ok=True)
+    (klasor / "index.html").write_text(sayfa, encoding="utf-8")
 
 
 def gorselleri_temizle(gun: int = 10) -> None:

@@ -140,7 +140,8 @@ telegram:
   hata_bildirimi_aktif: true
   # Yarı otomatik mod: instagram_aktif=false iken hazır görseller + açıklama
   # TELEGRAM_SAHIP_ID'ye gönderilir, sen elle paylaşırsın.
-  taslak_aktif: true
+  # (Varsayılan yol: sitedeki /hazir/ sayfası; bu sadece ek bildirim.)
+  taslak_aktif: false
 
 # -------------------------------------------------------------------
 # MARKETLERİN HAFTALIK İNDİRİM GÜNLERİ (haftalık takvim gönderisi + site)

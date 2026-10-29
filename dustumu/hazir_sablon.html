@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Hazır gönderiler | Düştü Mü?</title>
+<style>
+:root{--sari:#FFD60A;--siyah:#111;--gri:#6b6b6b;--zemin:#f6f6f3;--kart:#fff;--cizgi:#e4e4df;--yesil:#1a7f37}
+@media (prefers-color-scheme:dark){:root{--zemin:#121212;--kart:#1d1d1d;--cizgi:#333;--gri:#a0a0a0;--siyah:#f2f2f2;--yesil:#4ac26b}}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--zemin);color:var(--siyah);line-height:1.45}
+header{background:#FFD60A;color:#111;padding:18px 16px}
+header h1{margin:0;font-size:22px;font-weight:900}
+header p{margin:4px 0 0;font-size:14px}
+main{max-width:640px;margin:0 auto;padding:16px}
+.bos{text-align:center;color:var(--gri);padding:48px 8px}
+.kart{background:var(--kart);border:1px solid var(--cizgi);border-radius:16px;padding:14px;margin-bottom:16px}
+.kart.bitti{opacity:.55}
+.ust{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;font-size:14px}
+.tur{font-weight:800}
+.rozet{font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--cizgi);white-space:nowrap}
+.rozet.simdi{background:#FFD60A;color:#111}
+.rozet.tamam{background:var(--yesil);color:#fff}
+.seri{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:6px}
+.seri a{flex:0 0 72%;scroll-snap-align:start}
+.seri a:only-child{flex-basis:100%}
+.seri img{width:100%;border-radius:10px;display:block;background:var(--cizgi)}
+.metin{white-space:pre-wrap;font-size:14px;background:var(--zemin);border-radius:10px;padding:10px;margin:10px 0;max-height:160px;overflow:auto}
+.butonlar{display:flex;flex-wrap:wrap;gap:8px}
+button{font:inherit;font-weight:800;border:0;border-radius:999px;padding:12px 16px;cursor:pointer;min-height:44px}
+.ana{background:#111;color:#FFD60A;flex:1 1 100%}
+@media (prefers-color-scheme:dark){.ana{background:#FFD60A;color:#111}}
+.ikincil{background:var(--cizgi);color:var(--siyah);flex:1}
+.not{font-size:12px;color:var(--gri);margin-top:8px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Hazır gönderiler</h1>
+  <p>Son güncelleme: <span id="guncelleme"></span> · Bot her 30 dakikada bir yeniler.</p>
+</header>
+<main id="liste"></main>
+<script>
+var VERI = __VERI__;
+var TUR = {carousel: "📸 Kaydırmalı gönderi", tekli: "📸 Tekli gönderi", hikaye: "📱 Hikâye", takvim: "🗓️ Takvim gönderisi"};
+var dosyalar = {};
+
+function oku() { try { return JSON.parse(localStorage.getItem("paylasildi") || "[]"); } catch (e) { return []; } }
+function yaz(l) { try { localStorage.setItem("paylasildi", JSON.stringify(l)); } catch (e) {} }
+
+function saat(iso) {
+  var d = new Date(iso);
+  return isNaN(d) ? iso : d.toLocaleString("tr-TR", {day: "numeric", month: "long", hour: "2-digit", minute: "2-digit"});
+}
+
+function kopyala(metin) {
+  if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(metin).catch(function () { return eskiKopyala(metin); });
+  return Promise.resolve(eskiKopyala(metin));
+}
+function eskiKopyala(metin) {
+  var t = document.createElement("textarea"); t.value = metin; document.body.appendChild(t); t.select();
+  try { document.execCommand("copy"); } catch (e) {}
+  t.remove();
+}
+
+// Görselleri önceden indir: paylaşım menüsü dokunuştan hemen sonra açılmalı (iOS bekletmeye izin vermiyor).
+function hazirla(g) {
+  dosyalar[g.id] = Promise.all(g.gorseller.map(function (ad, i) {
+    return fetch("../g/" + ad).then(function (r) { return r.blob(); })
+      .then(function (b) { return new File([b], "dustumu_" + g.id + "_" + (i + 1) + ".jpg", {type: "image/jpeg"}); });
+  })).catch(function () { return null; });
+}
+
+function indir(g) {
+  g.gorseller.forEach(function (ad, i) {
+    setTimeout(function () {
+      var a = document.createElement("a"); a.href = "../g/" + ad; a.download = "dustumu_" + g.id + "_" + (i + 1) + ".jpg";
+      document.body.appendChild(a); a.click(); a.remove();
+    }, i * 400);
+  });
+}
+
+function paylas(g, dugme) {
+  if (g.aciklama) kopyala(g.aciklama);
+  dosyalar[g.id].then(function (f) {
+    if (f && navigator.canShare && navigator.canShare({files: f})) {
+      return navigator.share({files: f}).catch(function () {});
+    }
+    indir(g);
+  });
+  dugme.textContent = g.aciklama ? "✓ Açıklama kopyalandı — Instagram'ı seç" : "✓ Instagram'ı seç";
+}
+
+function isaretle(id) {
+  var l = oku(), i = l.indexOf(id);
+  if (i < 0) l.push(id); else l.splice(i, 1);
+  yaz(l); ciz();
+}
+
+function ciz() {
+  var liste = document.getElementById("liste"), bitenler = oku(), simdi = Date.now();
+  liste.innerHTML = "";
+  if (!VERI.gonderiler.length) {
+    liste.innerHTML = '<p class="bos">Şu an bekleyen gönderi yok.<br>Bot yeni bir gönderi hazırlayınca burada görünür.</p>';
+    return;
+  }
+  VERI.gonderiler.forEach(function (g) {
+    var bitti = bitenler.indexOf(g.id) >= 0, zamani = Date.parse(g.planlanan) <= simdi;
+    var k = document.createElement("section"); k.className = "kart" + (bitti ? " bitti" : "");
+    var rozet = bitti ? '<span class="rozet tamam">Paylaşıldı</span>'
+      : zamani ? '<span class="rozet simdi">Şimdi paylaş</span>'
+      : '<span class="rozet">' + saat(g.planlanan) + "</span>";
+    k.innerHTML = '<div class="ust"><span class="tur"></span>' + rozet + '</div><div class="seri"></div>' +
+      (g.aciklama ? '<div class="metin"></div>' : "") +
+      '<div class="butonlar"><button class="ana"></button><button class="ikincil kopya">Açıklamayı kopyala</button>' +
+      '<button class="ikincil bitir"></button></div>' +
+      '<p class="not">' + (g.tur === "hikaye" ? "Instagram'da Hikâye olarak paylaş." : g.gorseller.length > 1 ? "Görseller sırayla gelir; Instagram'da hepsini seçip kaydırmalı gönderi yap." : "") + "</p>";
+    k.querySelector(".tur").textContent = (TUR[g.tur] || g.tur) + " · " + saat(g.planlanan);
+    var seri = k.querySelector(".seri");
+    g.gorseller.forEach(function (ad) {
+      var a = document.createElement("a"); a.href = "../g/" + ad; a.target = "_blank";
+      var img = document.createElement("img"); img.src = "../g/" + ad; img.loading = "lazy"; img.alt = "";
+      a.appendChild(img); seri.appendChild(a);
+    });
+    if (g.aciklama) k.querySelector(".metin").textContent = g.aciklama;
+    var ana = k.querySelector(".ana"); ana.textContent = "Instagram'da paylaş";
+    ana.onclick = function () { paylas(g, ana); };
+    var kopya = k.querySelector(".kopya");
+    if (!g.aciklama) kopya.remove();
+    else kopya.onclick = function () { kopyala(g.aciklama); kopya.textContent = "✓ Kopyalandı"; };
+    var bitir = k.querySelector(".bitir"); bitir.textContent = bitti ? "Geri al" : "Paylaştım ✓";
+    bitir.onclick = function () { isaretle(g.id); };
+    liste.appendChild(k);
+  });
+}
+
+document.getElementById("guncelleme").textContent = VERI.guncelleme;
+VERI.gonderiler.forEach(hazirla);
+ciz();
+</script>
+</body>
+</html>
