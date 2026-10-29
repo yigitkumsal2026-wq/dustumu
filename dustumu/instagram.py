@@ -24,8 +24,14 @@ class IGHata(Exception):
     pass
 
 
+def _facebook() -> bool:
+    """IG_GIRIS=facebook: Facebook sayfasına bağlı hesap + süresiz sayfa token'ı (scripts/fb_kurulum.py)."""
+    return config.env("IG_GIRIS", "instagram").lower() == "facebook"
+
+
 def _api() -> str:
-    return f"https://graph.instagram.com/{config.env('IG_API_VERSION', 'v23.0')}"
+    alan = "graph.facebook.com" if _facebook() else "graph.instagram.com"
+    return f"https://{alan}/{config.env('IG_API_VERSION', 'v23.0')}"
 
 
 # ------------------------------------------------------------------ token
@@ -54,6 +60,8 @@ def token(c) -> str:
 
 def token_yenile(c, zorla: bool = False) -> None:
     """Uzun ömürlü token 60 gün geçerlidir; haftada bir yenileyip süresini uzatır."""
+    if _facebook():  # sayfa token'ı süresiz, yenileme gerekmez
+        return
     son = kv_al(c, "ig_token_yenileme")
     if not zorla and son and datetime.fromisoformat(son) > config.simdi() - timedelta(days=7):
         return
@@ -160,7 +168,8 @@ def yorumlara_dm(c, link_bul) -> int:
             if c.execute("SELECT 1 FROM yanitlanan_yorumlar WHERE yorum_id=?", (y["id"],)).fetchone():
                 continue
             try:
-                requests.post(f"{_api()}/{_kullanici()}/messages", timeout=30,
+                gonderen = "me" if _facebook() else _kullanici()  # facebook: sayfa adına
+                requests.post(f"{_api()}/{gonderen}/messages", timeout=30,
                               params={"access_token": token(c)},
                               json={"recipient": {"comment_id": y["id"]}, "message": {"text": metin}}
                               ).raise_for_status()

@@ -77,7 +77,7 @@ def ig_test(c) -> None:
     from dustumu import instagram
     import requests
     t = instagram.token(c)
-    r = requests.get(f"{instagram._api()}/me", params={"fields": "user_id,username,account_type", "access_token": t}, timeout=30)
+    r = requests.get(f"{instagram._api()}/{instagram._kullanici()}", params={"fields": "id,username", "access_token": t}, timeout=30)
     print("Hesap:", r.json())
     print("Kota:", instagram.kota(c))
 

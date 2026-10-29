@@ -34,6 +34,7 @@ jobs:
       PYTHONUTF8: "1"
       IG_USER_ID: ${{ secrets.IG_USER_ID }}
       IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+      IG_GIRIS: ${{ vars.IG_GIRIS }}
       DURUM_ANAHTARI: ${{ secrets.DURUM_ANAHTARI }}
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_KANAL: ${{ secrets.TELEGRAM_KANAL }}
