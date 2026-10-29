@@ -103,14 +103,15 @@ def _urun_ailesi(ad: str) -> str:
 
 
 def _cesitli_sec(adaylar: list[dict], n: int, haric: list[dict] | None = None,
-                 kaynak_siniri: int | None = None) -> list[dict]:
-    """Aynı mağazadan/aynı ürünün renk-koku çeşitlerinden yığılmasın; en iyi n ürünü seç."""
+                 kaynak_siniri: int | None = None, aile_kontrol: bool = True) -> list[dict]:
+    """Aynı mağazadan/aynı ürünün renk-koku çeşitlerinden yığılmasın; en iyi n ürünü seç.
+    Elle seçilen linklerde aile_kontrol=False (her ürünü sen seçtin)."""
     secilen, kaynak_sayisi = [], {}
     aileler = {_urun_ailesi(f["ad"]) for f in haric or []}
     sinir = kaynak_siniri or max(2, n // 2)
     for f in adaylar:
         aile = _urun_ailesi(f["ad"])
-        if aile in aileler:
+        if aile_kontrol and aile in aileler:
             continue
         if kaynak_sayisi.get(f["kaynak"], 0) < sinir:
             secilen.append(f)
@@ -159,7 +160,7 @@ def planla(c: sqlite3.Connection, zorla: bool = False, bim_katalog: list[dict] |
         #    toplanır; yoksa market indirimleri + yaklaşan aktüeller. Yeterli aday yoksa tekli.
         online = sorted(eticaret, key=lambda f: -f["puan"])
         if len(online) >= 3:
-            secim = _cesitli_sec(online, n, kaynak_siniri=n)
+            secim = _cesitli_sec(online, n, kaynak_siniri=n, aile_kontrol=False)
             magazalar = {f["kaynak"] for f in secim}
             if len(magazalar) == 1:
                 yer = KAYNAK_ADLARI.get(next(iter(magazalar)), "İnternet")
