@@ -164,7 +164,7 @@ def _indirim_cikartmasi(img, merkez, r, metin, renk, aci=-12, ust_yazi="İNDİR�
 
 
 # ------------------------------------------------------------------ tekli fırsat
-def firsat_gorseli(f: dict, hedef: Path, hikaye: bool = False) -> Path:
+def firsat_gorseli(f: dict, hedef: Path, hikaye: bool = False, reklam_degil: bool = True) -> Path:
     """f: fırsat sözlüğü (kod, ad, fiyat, eski_fiyat, indirim, guven, kaynak, gorsel, gecerlilik)."""
     yuk = SH if hikaye else H
     tema = TEMALAR[f["kod"] % len(TEMALAR)]
@@ -252,10 +252,10 @@ def firsat_gorseli(f: dict, hedef: Path, hikaye: bool = False) -> Path:
                    "TARİHİNDEN İTİBAREN", font=font("semi", 24), fill="#9CA3AF")
     d.text((x_yeni, taban - bb[3]), yeni, font=fyeni, fill="#FFFFFF")
 
-    # En alt: kod + çağrı
+    # En alt: çağrı
     alt_y = panel_alt + (40 if hikaye else 24)
     fcta = font("black", 36)
-    cta = f"KOD {f['kod']}  •  LİNK PROFİLDE"
+    cta = "REKLAM DEĞİLDİR  •  KAYDET" if reklam_degil else "KAYDET  •  ARKADAŞINA GÖNDER"
     d.text(((W - d.textlength(cta, font=fcta)) / 2, alt_y), cta, font=fcta, fill=tema["yazi"])
     fdm = font("semi", 26)
     dm = "Yorumlara LİNK yaz, DM'den gönderelim" if config.ayarlar()["yorum_dm"]["aktif"] else "Fiyatlar paylaşım anındaki fiyatlardır"

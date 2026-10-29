@@ -114,9 +114,9 @@ yayin:
   tekrar_engel_gun: 14
   # Gönderi başına hashtag sayısı (Instagram 3-5 öneriyor).
   hashtag_sayisi: 5
-  # Market indirimlerini tek tek değil, carousel (kaydırmalı) olarak topla.
+  # Her gönderi tek ürün değil, çok fırsatlı carousel (kaydırmalı) olsun (en az 3 aday varsa).
   market_carousel: true
-  carousel_urun_sayisi: 6
+  carousel_urun_sayisi: 8   # Instagram sınırı: kapak + 9
   # Her pazartesi "Bu hafta market indirim günleri" takvim gönderisi.
   haftalik_takvim_gonderisi: true
   # Her feed gönderisinin bir hikâye (story) versiyonunu da paylaş.
@@ -152,6 +152,28 @@ market_gunleri:
   - {market: a101, gun: 3, baslik: "A101 Aldın Aldın aktüel ürünler"}
   - {market: sok,  gun: 2, baslik: "ŞOK Çarşamba aktüel ürünler"}
   - {market: migros, gun: 3, baslik: "Migros haftalık Money indirimleri"}
+
+# -------------------------------------------------------------------
+# POPÜLERLİK — insanların en çok aldığı ürünler öne çıkar, niş ürünler geride kalır.
+# Ürün adı/kategorisi bu kelimeleri içeriyorsa puana eklenir/çıkarılır.
+# -------------------------------------------------------------------
+populerlik:
+  cok_alinan_puan: 30
+  marka_puan: 15
+  nis_ceza: 40
+  cok_alinan: ["süt", "yoğurt", "peynir", "yumurta", "tereyağ", "ayçiçek yağı", "zeytinyağ", "çay", "kahve",
+               "şeker", " un ", "makarna", "pirinç", "bulgur", "mercimek", "salça", " su ", "maden suyu",
+               "kola", "meyve suyu", "çikolata", "bisküvi", "gofret", "cips", "dondurma", "tavuk", "kıyma",
+               "sucuk", "deterjan", "yumuşatıcı", "bulaşık", "çamaşır suyu", "tuvalet kağıdı", "kağıt havlu",
+               "peçete", "ıslak mendil", "bebek bezi", "şampuan", "diş macunu", "deodorant", "duş jeli",
+               "sabun", "tıraş", " ped ", "kulaklık", "powerbank", "airfryer", "süpürge"]
+  bilinen_markalar: ["ülker", " eti ", "torku", "pınar", "sütaş", "içim", "nestle", "milka", "coca-cola",
+                     "fairy", "finish", "omo", "persil", "ariel", "bingo", "domestos", "selpak", "solo",
+                     "familia", "prima", "molfix", "elseve", "pantene", "head & shoulders", "colgate",
+                     "signal", "gillette", "nivea", "dove", "rexona", "lipton", "doğuş", "çaykur",
+                     "nescafe", "jacobs", "filiz", "barilla", " tat ", "tukaş", "komili", "yudum"]
+  nis: ["anahtarlık", "peştamal", "peştemal", "plaj havlusu", "figür", "masa örtüsü", "cüzdan",
+        "karınca", "haşere", "tüy toplayıcı", "eldiven", "ayakkabı deodorant", "dekoratif"]
 
 # Bu kelimeleri içeren ürünler asla paylaşılmaz.
 kara_liste_kelimeler: ["sigara", "alkol", "bira", "şarap", "rakı", "votka", "viski", "tütün", "puro", "yetişkin", "erotik", "silah", "bıçak seti"]

@@ -46,19 +46,18 @@ def _etiketler(kaynaklar: list[str], ekstra: list[str] | None = None) -> str:
     return " ".join(list(dict.fromkeys(["#düştümü"] + secim))[:n])
 
 
-def _link_satirlari(kod: int | None = None) -> list[str]:
-    a = config.ayarlar()
-    s = [f"🔗 Link profilde → Fırsat KOD {kod}" if kod else "🔗 Linkler profilde (kodları ara)"]
-    if a["yorum_dm"]["aktif"]:
-        s.append('💬 Yorumlara "LİNK" yaz, DM\'den gönderelim.')
-    s.append(f"🌐 {a['marka']['site_url'].replace('https://', '')}" + (f"/k/{kod}" if kod else ""))
-    return s
+def _link_satirlari() -> list[str]:
+    if config.ayarlar()["yorum_dm"]["aktif"]:
+        return ['💬 Yorumlara "LİNK" yaz, DM\'den gönderelim.']
+    return []
+
+
+REKLAM_DEGIL = "📢 Reklam değildir. Hiçbir markayla iş birliğimiz yok, ücret almıyoruz; fiyatları kendimiz takip ediyoruz."
 
 
 def _alt_bilgi(affiliate: bool) -> list[str]:
     s = [f"⏰ Fiyatlar {config.simdi():%d.%m.%Y %H:%M} itibarıyladır; stok ve fiyat değişebilir."]
-    if affiliate:
-        s.append(config.ayarlar()["affiliate"]["aciklama_etiketi"])
+    s.append(config.ayarlar()["affiliate"]["aciklama_etiketi"] if affiliate else REKLAM_DEGIL)
     return s
 
 
@@ -71,22 +70,22 @@ def tekli(f: dict, affiliate: bool = False) -> str:
     else:
         giris = random.choice(GIRISLER).format(i=int(f["indirim"]), ad=f["ad"], t=t)
         fiyat = [f"❌ {para(f['eski_fiyat'])} TL → ✅ {para(f['fiyat'])} TL", f"💰 {t} TL tasarruf (%{int(f['indirim'])})"]
-    satirlar = [giris, "", *fiyat, GUVEN_SATIRI[f["guven"]], f"🏪 {m}", "", *_link_satirlari(f["kod"]),
-                "", "📌 Kaydet, ihtiyacı olan arkadaşını etiketle!", *_alt_bilgi(affiliate), "",
+    satirlar = [giris, "", *fiyat, GUVEN_SATIRI[f["guven"]], f"🏪 {m}", "", *_link_satirlari(),
+                "📌 Kaydet, ihtiyacı olan arkadaşını etiketle!", *_alt_bilgi(affiliate), "",
                 _etiketler([f["kaynak"]])]
     return "\n".join(satirlar)
 
 
 def carousel(firsatlar: list[dict], baslik: str, affiliate: bool = False) -> str:
-    satirlar = [f"🛒 {baslik}", "Kaydır, bugünün market fırsatlarını gör 👉", ""]
+    satirlar = [f"🛒 {baslik}", f"Kaydır, {len(firsatlar)} fırsatın hepsini gör 👉", ""]
     for f in firsatlar:
         m = KAYNAK_ADLARI.get(f["kaynak"], f["kaynak"])
         if f["guven"] == "aktuel":
-            satirlar.append(f"• {f['ad']} — {para(f['fiyat'])} TL ({m}) · KOD {f['kod']}")
+            satirlar.append(f"• {f['ad']} — {para(f['fiyat'])} TL ({m})")
         else:
             satirlar.append(f"• {f['ad']} — {para(f['eski_fiyat'])} → {para(f['fiyat'])} TL "
-                            f"(%{int(f['indirim'])}, {m}) · KOD {f['kod']}")
-    satirlar += ["", *_link_satirlari(), "", *_alt_bilgi(affiliate), "",
+                            f"(%{int(f['indirim'])}, {m})")
+    satirlar += ["", *_link_satirlari(), "📌 Kaydet, alışverişe çıkmadan bak!", *_alt_bilgi(affiliate), "",
                  _etiketler(list(dict.fromkeys(f["kaynak"] for f in firsatlar)), ["#marketindirimleri"])]
     return "\n".join(satirlar)
 

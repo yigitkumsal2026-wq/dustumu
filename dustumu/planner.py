@@ -96,12 +96,22 @@ def _dosya(ad: str):
     return config.GORSEL / ad
 
 
-def _cesitli_sec(adaylar: list[dict], n: int) -> list[dict]:
-    """Aynı mağazadan art arda gelmesin; mağazaları karıştırarak en iyi n ürünü seç."""
+def _urun_ailesi(ad: str) -> str:
+    """'Signal White Now 3In1 Shine 75 Ml' ile '... Original 75 Ml' aynı aile: ilk iki kelime."""
+    return " ".join(ad.lower().split()[:2])
+
+
+def _cesitli_sec(adaylar: list[dict], n: int, haric: list[dict] | None = None) -> list[dict]:
+    """Aynı mağazadan/aynı ürünün renk-koku çeşitlerinden yığılmasın; en iyi n ürünü seç."""
     secilen, kaynak_sayisi = [], {}
+    aileler = {_urun_ailesi(f["ad"]) for f in haric or []}
     for f in adaylar:
+        aile = _urun_ailesi(f["ad"])
+        if aile in aileler:
+            continue
         if kaynak_sayisi.get(f["kaynak"], 0) < max(2, n // 2):
             secilen.append(f)
+            aileler.add(aile)
             kaynak_sayisi[f["kaynak"]] = kaynak_sayisi.get(f["kaynak"], 0) + 1
         if len(secilen) == n:
             break
@@ -133,8 +143,6 @@ def planla(c: sqlite3.Connection, zorla: bool = False, bim_katalog: list[dict] |
         yeni.append(_kayit(c, "takvim", [], [ad], captions.takvim(market, ozel), s))
         kv_yaz(c, "son_takvim_haftasi", f"{hafta[0]}-{hafta[1]}")
     else:
-        bugun_carousel = c.execute("""SELECT COUNT(*) FROM gonderiler WHERE tur='carousel' AND substr(planlanan,1,10)=?
-                                      AND durum IN ('planlandi','yayinlandi','deneme')""", (gun,)).fetchone()[0]
         market = aktif_firsatlar(c, "market", yasak)
         indirimli_market = [f for f in market if f["guven"] != "aktuel"]
         aktuel = [f for f in market if f["guven"] == "aktuel"
@@ -144,20 +152,27 @@ def planla(c: sqlite3.Connection, zorla: bool = False, bim_katalog: list[dict] |
             eticaret = [f for f in eticaret if f["guven"] in ("dogrulandi", "editor")]
         n = y["carousel_urun_sayisi"]
 
-        # 2) Günde bir market carousel'i (indirimler + yaklaşan aktüeller)
-        if y["market_carousel"] and not bugun_carousel and len(indirimli_market) + len(aktuel) >= 3:
-            secim = _cesitli_sec(indirimli_market, n - 2)
-            secim += _cesitli_sec(sorted(aktuel, key=lambda f: f.get("bitis") or ""), n - len(secim))
-            secim = secim[:n]
+        # 2) Çok fırsatlı carousel (indirimler + e-ticaret + yaklaşan aktüeller); yeterli aday yoksa tekli
+        indirimli = sorted(indirimli_market + eticaret, key=lambda f: -f["puan"])
+        secim = _cesitli_sec(indirimli, n - 2)
+        secim += _cesitli_sec(sorted(aktuel, key=lambda f: f.get("bitis") or ""), n - len(secim), secim)
+        if len(secim) < n:
+            secim += _cesitli_sec(indirimli, n - len(secim), secim)
+        secim = secim[:n]
+        if y["market_carousel"] and len(secim) >= 3:
+            aff = _affiliate_mi(secim)
             gorseller = [f"car_{damga}_0.jpg"]
-            render.carousel_kapak(secim, f"{tr_tarih(s.date())} market fırsatları", _dosya(gorseller[0]))
+            render.carousel_kapak(secim, f"{tr_tarih(s.date())} · {len(secim)} fırsat", _dosya(gorseller[0]))
             for i, f in enumerate(secim, 1):
                 ad = f"car_{damga}_{i}_{f['kod']}.jpg"
-                render.firsat_gorseli(f, _dosya(ad))
+                render.firsat_gorseli(f, _dosya(ad), reklam_degil=not aff)
                 gorseller.append(ad)
-            aciklama = captions.carousel(secim, f"{tr_tarih(s.date())} — Bugün markette ne düştü?",
-                                         _affiliate_mi(secim))
+            aciklama = captions.carousel(secim, f"{tr_tarih(s.date())} — Bugün ne düştü?", aff)
             yeni.append(_kayit(c, "carousel", secim, gorseller, aciklama, s))
+            if y["hikaye_paylas"] and _bugun_sayisi(c, gun, ("hikaye",)) < y["gunluk_max_hikaye"]:
+                had = f"hik_{damga}_{secim[0]['kod']}.jpg"
+                render.firsat_gorseli(secim[0], _dosya(had), hikaye=True, reklam_degil=not aff)
+                yeni.append(_kayit(c, "hikaye", [secim[0]], [had], "", s))
         else:
             # 3) Tekli fırsat: e-ticaret ve market dönüşümlü, en yüksek puanlı
             son_tur = kv_al(c, "son_tekli_tur", "market")
@@ -168,11 +183,11 @@ def planla(c: sqlite3.Connection, zorla: bool = False, bim_katalog: list[dict] |
                 return []
             kv_yaz(c, "son_tekli_tur", aday["tur"])
             ad = f"tek_{damga}_{aday['kod']}.jpg"
-            render.firsat_gorseli(aday, _dosya(ad))
+            render.firsat_gorseli(aday, _dosya(ad), reklam_degil=not _affiliate_mi([aday]))
             yeni.append(_kayit(c, "tekli", [aday], [ad], captions.tekli(aday, _affiliate_mi([aday])), s))
             if y["hikaye_paylas"] and _bugun_sayisi(c, gun, ("hikaye",)) < y["gunluk_max_hikaye"]:
                 had = f"hik_{damga}_{aday['kod']}.jpg"
-                render.firsat_gorseli(aday, _dosya(had), hikaye=True)
+                render.firsat_gorseli(aday, _dosya(had), hikaye=True, reklam_degil=not _affiliate_mi([aday]))
                 yeni.append(_kayit(c, "hikaye", [aday], [had], "", s))
 
     bekle = y["min_aralik_dk"] + random.randint(-y["rastgele_sapma_dk"], y["rastgele_sapma_dk"])
@@ -189,11 +204,11 @@ def tekli_hazirla(c: sqlite3.Connection, kod: int, hikaye: bool = True) -> list[
     s = config.simdi()
     damga = s.strftime("%Y%m%d%H%M%S")
     ad = f"tek_{damga}_{kod}.jpg"
-    render.firsat_gorseli(f, _dosya(ad))
+    render.firsat_gorseli(f, _dosya(ad), reklam_degil=not _affiliate_mi([f]))
     ids = [_kayit(c, "tekli", [f], [ad], captions.tekli(f, _affiliate_mi([f])), s)]
     if hikaye and config.ayarlar()["yayin"]["hikaye_paylas"]:
         had = f"hik_{damga}_{kod}.jpg"
-        render.firsat_gorseli(f, _dosya(had), hikaye=True)
+        render.firsat_gorseli(f, _dosya(had), hikaye=True, reklam_degil=not _affiliate_mi([f]))
         ids.append(_kayit(c, "hikaye", [f], [had], "", s))
     return ids
 

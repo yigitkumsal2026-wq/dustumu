@@ -117,11 +117,30 @@ def degerlendir(gecmis: list[float], bugun_fiyat: float, liste: float | None,
     return {"karar": "firsat", "guven": "beyan", "eski": eski, "indirim": indirim, "aciklama": aciklama}
 
 
-def puanla(indirim: float, tasarruf: float, guven: str, tur: str) -> float:
+def _tr_kucuk(s: str) -> str:
+    return s.replace("I", "ı").replace("İ", "i").lower()
+
+
+def populerlik(ad: str, kategori: str | None = None) -> int:
+    """Çok alınan ürün/marka artı, niş ürün eksi puan (config: populerlik)."""
+    a = config.ayarlar().get("populerlik") or {}
+    metin = _tr_kucuk(f" {ad} {kategori or ''} ")
+    p = 0
+    if any(_tr_kucuk(k) in metin for k in a.get("cok_alinan", [])):
+        p += a.get("cok_alinan_puan", 30)
+    if any(_tr_kucuk(k) in metin for k in a.get("bilinen_markalar", [])):
+        p += a.get("marka_puan", 15)
+    if any(_tr_kucuk(k) in metin for k in a.get("nis", [])):
+        p -= a.get("nis_ceza", 40)
+    return p
+
+
+def puanla(indirim: float, tasarruf: float, guven: str, tur: str, ad: str = "", kategori: str | None = None) -> float:
     p = indirim + 12 * math.log10(max(tasarruf, 1))
     p += {"dogrulandi": 25, "editor": 30, "beyan": 0, "aktuel": 0}.get(guven, 0)
     if tur == "eticaret":
         p += 5  # e-ticaret fırsatları daha çok kaydediliyor/paylaşılıyor
+    p += populerlik(ad, kategori)
     return round(p, 2)
 
 
@@ -167,7 +186,7 @@ def firsatlari_guncelle(c: sqlite3.Connection, bugun: date) -> dict:
             continue
         if not u["gorsel"]:
             continue
-        puan = puanla(sonuc["indirim"], tasarruf, sonuc["guven"], u["tur"])
+        puan = puanla(sonuc["indirim"], tasarruf, sonuc["guven"], u["tur"], u["ad"], u["kategori"])
         mevcut = c.execute("SELECT kod FROM firsatlar WHERE urun_id=? AND aktif=1", (u["id"],)).fetchone()
         if mevcut:
             c.execute("""UPDATE firsatlar SET guncelleme=?, fiyat=?, eski_fiyat=?, indirim=?, guven=?,
