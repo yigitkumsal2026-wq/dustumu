@@ -1,0 +1,7 @@
+# Paylaşılmasını istediğin ürünlerin linklerini buraya yapıştır: her satıra bir link.
+# Ad, fotoğraf, fiyat ve üstü çizili fiyat ürün sayfasından otomatik okunur (her çalıştırmada güncellenir).
+# İndirim bitiş tarihini biliyorsan linkin yanına boşluk bırakıp yaz: https://... 2026-11-30
+# Ürün indirimde değilse paylaşılmaz. Trendyol çalışır; Hepsiburada, A101 ve Amazon
+# sayfalarını otomatik okumaya izin vermiyor, onları manuel_firsatlar.yaml'a elle yaz.
+# "#" ile başlayan satırlar açıklamadır, dikkate alınmaz.
+

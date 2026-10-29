@@ -131,6 +131,8 @@ Bir de şunlara dikkat et: ilk hafta profil fotoğrafı, bio ve 3-4 elle gönder
 - URL parametresiyle çalışan programlar için `config.yaml` > `affiliate` bölümüne şablon gir: ör. `amazon: "{url}?tag=SENIN-ETIKETIN-21"`.
 - Affiliate olan gönderilere otomatik `#işbirliği` eklenir (Reklam Kurulu sosyal medya etkileyicileri kılavuzu).
 
+**En kolayı — sadece link:** GitHub'da `data/linkler.txt` dosyasına her satıra bir ürün linki yapıştır (istersen yanına bitiş tarihi: `https://... 2026-11-30`). Ad, fotoğraf ve fiyatlar sayfadan okunur; ürün %10'dan az indirimliyse paylaşılmaz. Şimdilik Trendyol çalışır; Hepsiburada, A101 ve Amazon otomatik okumaya izin vermiyor.
+
 Bulutta manuel fırsat eklemek için GitHub'da `data/manuel_firsatlar.yaml` dosyasını tarayıcıdan düzenleyebilirsin (dosyada örnek var), ya da yerel panelden ekleyip `git push` yaparsın.
 
 ---
