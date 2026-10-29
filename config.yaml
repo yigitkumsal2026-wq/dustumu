@@ -116,7 +116,7 @@ yayin:
   hashtag_sayisi: 5
   # Her gönderi tek ürün değil, çok fırsatlı carousel (kaydırmalı) olsun (en az 3 aday varsa).
   market_carousel: true
-  carousel_urun_sayisi: 8   # Instagram sınırı: kapak + 9
+  carousel_urun_sayisi: 9   # Instagram API sınırı 10 görsel: kapak + 9 ürün (en fazla)
   # Her pazartesi "Bu hafta market indirim günleri" takvim gönderisi.
   haftalik_takvim_gonderisi: true
   # Her feed gönderisinin bir hikâye (story) versiyonunu da paylaş.
