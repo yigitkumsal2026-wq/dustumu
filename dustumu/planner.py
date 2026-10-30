@@ -170,6 +170,12 @@ def planla(c: sqlite3.Connection, zorla: bool = False, bim_katalog: list[dict] |
                 yer_ek = "İnternette"
             kapak_satirlari = ("BUGÜN", yer_ek.replace("i", "İ").upper(), "NE DÜŞTÜ?")
             baslik = f"Bugün {yer_ek} ne düştü?"
+        elif sum(f["kaynak"] == "migroskop" for f in indirimli_market) >= 3:
+            # Migroskop kataloğu bitene kadar kendi gönderisinde toplanır.
+            katalog = sorted((f for f in indirimli_market if f["kaynak"] == "migroskop"), key=lambda f: -f["puan"])
+            secim = _cesitli_sec(katalog, n, kaynak_siniri=n)
+            kapak_satirlari = ("MİGROSKOP'TA", "MONEY'Lİ", "FIRSATLAR")
+            baslik = f"Migroskop'ta Money'li fırsatlar ({secim[0]['gecerlilik']})"
         else:
             indirimli = sorted(indirimli_market, key=lambda f: -f["puan"])
             secim = _cesitli_sec(indirimli, n - 2)

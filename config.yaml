@@ -62,6 +62,9 @@ kaynaklar:
     sayfalar: ["/indirimli-urunler-cms-pl1"]
   bim:
     aktif: true
+  # Migroskop dijital kataloğu: dönem ve bitiş tarihi katalogdan okunur.
+  migroskop:
+    aktif: true
   # Kozmetik mağazaları: indirim fiyat geçmişiyle doğrulanır (ilk günler paylaşım çıkmaz).
   rossmann:
     aktif: true

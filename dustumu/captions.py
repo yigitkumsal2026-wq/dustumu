@@ -64,6 +64,14 @@ def _link_satirlari() -> list[str]:
 REKLAM_DEGIL = "📢 Reklam değildir. Hiçbir markayla iş birliğimiz yok, ücret almıyoruz; fiyatları kendimiz takip ediyoruz."
 
 
+def _money_satiri(firsatlar: list[dict]) -> list[str]:
+    donem = next((f.get("gecerlilik") for f in firsatlar if f["kaynak"] == "migroskop"), None)
+    if not donem:
+        return []
+    return [f"💳 Migroskop {donem}: fiyatlar Money veya Money Bonus ile geçerlidir, indirim oranı Money'siz fiyata göredir. "
+            "Ürünler her mağazada bulunmayabilir."]
+
+
 def _alt_bilgi(affiliate: bool) -> list[str]:
     s = [f"⏰ Fiyatlar {config.simdi():%d.%m.%Y %H:%M} itibarıyladır; stok ve fiyat değişebilir."]
     s.append(config.ayarlar()["affiliate"]["aciklama_etiketi"] if affiliate else REKLAM_DEGIL)
@@ -81,7 +89,7 @@ def tekli(f: dict, affiliate: bool = False) -> str:
         fiyat = [f"❌ {para(f['eski_fiyat'])} TL → ✅ {para(f['fiyat'])} TL", f"💰 {t} TL tasarruf (%{int(f['indirim'])})"]
         if _son_gun(f):
             fiyat.append(f"⏳ Son gün: {_son_gun(f)}")
-    satirlar = [giris, "", *fiyat, GUVEN_SATIRI[f["guven"]], f"🏪 {m}", "", *_link_satirlari(),
+    satirlar = [giris, "", *fiyat, GUVEN_SATIRI[f["guven"]], f"🏪 {m}", *_money_satiri([f]), "", *_link_satirlari(),
                 "📌 Kaydet, ihtiyacı olan arkadaşını etiketle!", *_alt_bilgi(affiliate), "",
                 _etiketler([f["kaynak"]])]
     return "\n".join(satirlar)
@@ -96,7 +104,7 @@ def carousel(firsatlar: list[dict], baslik: str, affiliate: bool = False) -> str
         else:
             satirlar.append(f"• {f['ad']} — {para(f['eski_fiyat'])} → {para(f['fiyat'])} TL "
                             f"(%{int(f['indirim'])}, {m})" + (f" · son gün {_son_gun(f)}" if _son_gun(f) else ""))
-    satirlar += ["", *_link_satirlari(), "📌 Kaydet, alışverişe çıkmadan bak!", *_alt_bilgi(affiliate), "",
+    satirlar += ["", *_money_satiri(firsatlar), *_link_satirlari(), "📌 Kaydet, alışverişe çıkmadan bak!", *_alt_bilgi(affiliate), "",
                  _etiketler(list(dict.fromkeys(f["kaynak"] for f in firsatlar)), ["#marketindirimleri"] if any(f["tur"] == "market" for f in firsatlar) else ["#onlinealışveriş"])]
     return "\n".join(satirlar)
 

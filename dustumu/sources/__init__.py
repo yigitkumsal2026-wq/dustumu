@@ -29,7 +29,8 @@ class Urun:
 KAYNAK_ADLARI = {
     "n11": "n11", "migros": "Migros", "sok": "ŞOK", "bim": "BİM", "a101": "A101",
     "trendyol": "Trendyol", "hepsiburada": "Hepsiburada", "amazon": "Amazon",
-    "carrefoursa": "CarrefourSA", "rossmann": "Rossmann", "gratis": "Gratis", "diger": "Fırsat",
+    "carrefoursa": "CarrefourSA", "rossmann": "Rossmann", "gratis": "Gratis", "migroskop": "Migroskop",
+    "diger": "Fırsat",
 }
 
 # Görsellerdeki mağaza rozet renkleri (arka plan, yazı)
@@ -39,7 +40,7 @@ KAYNAK_RENK = {
     "a101": ("#00A0E3", "#FFFFFF"), "trendyol": ("#F27A1A", "#FFFFFF"),
     "hepsiburada": ("#FF6000", "#FFFFFF"), "amazon": ("#232F3E", "#FF9900"),
     "carrefoursa": ("#004E9F", "#FFFFFF"), "rossmann": ("#C8102E", "#FFFFFF"),
-    "gratis": ("#E6007E", "#FFFFFF"), "diger": ("#111111", "#FFFFFF"),
+    "gratis": ("#E6007E", "#FFFFFF"), "migroskop": ("#FF7F00", "#FFFFFF"), "diger": ("#111111", "#FFFFFF"),
 }
 
 
@@ -83,6 +84,6 @@ def tr_baslik(metin: str) -> str:
 
 
 def tum_kaynaklar():
-    from . import bim, gratis, manuel, migros, n11, rossmann, sok
-    return {"n11": n11, "migros": migros, "sok": sok, "bim": bim, "rossmann": rossmann, "gratis": gratis,
-            "manuel": manuel}
+    from . import bim, gratis, manuel, migros, migroskop, n11, rossmann, sok
+    return {"n11": n11, "migros": migros, "migroskop": migroskop, "sok": sok, "bim": bim, "rossmann": rossmann,
+            "gratis": gratis, "manuel": manuel}
