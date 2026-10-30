@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import logging
 import random
+import re
 import sqlite3
 from datetime import date, datetime, timedelta
 
@@ -21,6 +22,12 @@ from .sources import KAYNAK_ADLARI
 
 log = logging.getLogger(__name__)
 FEED_TURLERI = ("tekli", "carousel", "takvim")
+MARKA_TIP_SINIRI = 2  # Bir gönderide aynı markadan/aynı tipten en fazla bu kadar ürün
+URUN_TIPLERI = {
+    "deterjan": ("deterjan",), "deodorant": ("deodorant", "roll on", "roll-on"), "şampuan": ("şampuan",),
+    "diş macunu": ("diş macun",), "yumuşatıcı": ("yumuşatıcı",), "çikolata": ("çikolata",), "kahve": ("kahve",),
+    "bisküvi": ("bisküvi",), "peynir": ("peynir",), "yoğurt": ("yoğurt",), "sucuk": ("sucuk",), "parfüm": ("parfüm",),
+}
 
 
 def gunluk_limit(bugun: date) -> int:
@@ -74,6 +81,10 @@ def _son_paylasilan_urunler(c, gun: int) -> set[str]:
     return ids
 
 
+def _urun_adlari(c, ids: set[str]) -> list[str]:
+    return [r["ad"] for r in c.execute("SELECT id, ad FROM urunler") if r["id"] in ids]
+
+
 def aktif_firsatlar(c: sqlite3.Connection, tur: str | None = None, haric: set[str] | None = None) -> list[dict]:
     q = """SELECT f.*, u.ad, u.kaynak, u.tur, u.gorsel, u.url, u.gecerlilik, u.bitis, u.kategori
            FROM firsatlar f JOIN urunler u ON u.id=f.urun_id WHERE f.aktif=1"""
@@ -81,7 +92,9 @@ def aktif_firsatlar(c: sqlite3.Connection, tur: str | None = None, haric: set[st
     if tur:
         sonuc = [f for f in sonuc if f["tur"] == tur]
     if haric:
-        sonuc = [f for f in sonuc if f["urun_id"] not in haric]
+        # Aynı ürün başka firmada ya da yeni katalogda başka kodla gelebilir: ada da bakılır.
+        adlar = {_sade(a) for a in _urun_adlari(c, haric)}
+        sonuc = [f for f in sonuc if f["urun_id"] not in haric and _sade(f["ad"]) not in adlar]
     return sonuc
 
 
@@ -97,25 +110,52 @@ def _dosya(ad: str):
     return config.GORSEL / ad
 
 
+def _sade(ad: str) -> str:
+    return " ".join(ad.replace("İ", "i").replace("I", "ı").lower().split())
+
+
 def _urun_ailesi(ad: str) -> str:
     """'Signal White Now 3In1 Shine 75 Ml' ile '... Original 75 Ml' aynı aile: ilk iki kelime."""
-    return " ".join(ad.lower().split()[:2])
+    return " ".join(_sade(ad).split()[:2])
+
+
+def _marka(ad: str) -> str:
+    return (_sade(ad).split() or [""])[0]
+
+
+def _urun_tipi(ad: str) -> str | None:
+    """Farklı markalardan da olsa aynı şey sayılanlar: 'Omo ... Deterjan' ile 'Persil ... Deterjanı'."""
+    sade = _sade(ad)
+    return next((tip for tip, kelimeler in URUN_TIPLERI.items()
+                 if any(re.search(r"\b" + k, sade) for k in kelimeler)), None)
+
+
+def _tazelik(ad: str, son_adlar: list[str]) -> tuple[bool, bool, bool]:
+    """Sıralama anahtarı: yakında paylaşılmış aile, marka ve ürün tipi geriye düşer (False önce gelir)."""
+    tip = _urun_tipi(ad)
+    return (_urun_ailesi(ad) in {_urun_ailesi(a) for a in son_adlar},
+            _marka(ad) in {_marka(a) for a in son_adlar},
+            tip is not None and tip in {_urun_tipi(a) for a in son_adlar})
 
 
 def _cesitli_sec(adaylar: list[dict], n: int, haric: list[dict] | None = None,
                  kaynak_siniri: int | None = None, aile_kontrol: bool = True) -> list[dict]:
-    """Aynı mağazadan/aynı ürünün renk-koku çeşitlerinden yığılmasın; en iyi n ürünü seç.
+    """Aynı mağazadan/aynı ürünün renk-koku çeşitlerinden/aynı marka ya da tipten yığılmasın; en iyi n ürünü seç.
     Elle seçilen linklerde aile_kontrol=False (her ürünü sen seçtin)."""
     secilen, kaynak_sayisi = [], {}
     aileler = {_urun_ailesi(f["ad"]) for f in haric or []}
+    marka_sayisi, tip_sayisi = {}, {}
     sinir = kaynak_siniri or max(2, n // 2)
     for f in adaylar:
-        aile = _urun_ailesi(f["ad"])
-        if aile_kontrol and aile in aileler:
+        aile, marka, tip = _urun_ailesi(f["ad"]), _marka(f["ad"]), _urun_tipi(f["ad"])
+        if aile_kontrol and (aile in aileler or marka_sayisi.get(marka, 0) >= MARKA_TIP_SINIRI
+                             or (tip and tip_sayisi.get(tip, 0) >= MARKA_TIP_SINIRI)):
             continue
         if kaynak_sayisi.get(f["kaynak"], 0) < sinir:
             secilen.append(f)
             aileler.add(aile)
+            marka_sayisi[marka] = marka_sayisi.get(marka, 0) + 1
+            tip_sayisi[tip] = tip_sayisi.get(tip, 0) + 1
             kaynak_sayisi[f["kaynak"]] = kaynak_sayisi.get(f["kaynak"], 0) + 1
         if len(secilen) == n:
             break
@@ -133,13 +173,29 @@ def _yer_eki(ad: str) -> str:
     return f"{ad}'{'t' if kucuk[-1] in 'fstkçşhp' else 'd'}{a}"
 
 
-def _firma_sec(gruplar: dict[str, list[dict]], son: str | None) -> str | None:
-    """En az 3 adayı olan firmalardan bir önceki gönderininki hariç, bitişi en yakın olanı seçer."""
+def _firma_son_tarihleri(c) -> dict[str, str]:
+    """Her firmanın en son ne zaman gönderisi çıktığı."""
+    son: dict[str, str] = {}
+    for r in c.execute("""SELECT urunler, planlanan FROM gonderiler WHERE durum IN ('planlandi','yayinlandi','deneme')
+                          ORDER BY planlanan"""):
+        for u in json.loads(r["urunler"]):
+            son[u.split(":")[0]] = r["planlanan"]
+    return son
+
+
+def _firma_sec(gruplar: dict[str, list[dict]], son: str | None, son_tarihler: dict[str, str] | None = None,
+               acil_tarih: str = "") -> str | None:
+    """En az 3 adayı olan firmalardan bir önceki gönderininki hariç seçer: süresi bitmek üzere olan önce,
+    sonra en uzun süredir paylaşılmayan, eşitlikte bitişi en yakın olan."""
     uygun = {k: v for k, v in gruplar.items() if len(v) >= 3}
     adaylar = [k for k in uygun if k != son] or list(uygun)
     if not adaylar:
         return None
-    return min(adaylar, key=lambda k: (min(f.get("bitis") or "9" for f in uygun[k]), -uygun[k][0]["puan"]))
+
+    def anahtar(k):
+        bitis = min(f.get("bitis") or "9" for f in uygun[k])
+        return (bitis > acil_tarih, (son_tarihler or {}).get(k, ""), bitis, -uygun[k][0]["puan"])
+    return min(adaylar, key=anahtar)
 
 
 def planla(c: sqlite3.Connection, zorla: bool = False, bim_katalog: list[dict] | None = None) -> list[int]:
@@ -175,16 +231,22 @@ def planla(c: sqlite3.Connection, zorla: bool = False, bim_katalog: list[dict] |
         if y.get("eticaret_sadece_dogrulanmis", True):
             eticaret = [f for f in eticaret if f["guven"] in ("dogrulandi", "editor")]
         n = y["carousel_urun_sayisi"]
+        # Yakında paylaşılan aile/marka/tip geriye düşer; puan sırası her grubun içinde korunur.
+        son_adlar = _urun_adlari(c, _son_paylasilan_urunler(c, y["cesit_gun"]))
+        tazelik = lambda f: _tazelik(f["ad"], son_adlar)
+        eticaret = sorted(eticaret, key=tazelik)
+        indirimli_market = sorted(indirimli_market, key=tazelik)
+        aktuel = sorted(aktuel, key=lambda f: (tazelik(f), f.get("bitis") or ""))
 
         # 2) Çok fırsatlı carousel: her gönderi tek firmadan. Yeterli aday yoksa tekli.
         gruplar: dict[str, list[dict]] = {}
-        for f in (sorted(eticaret, key=lambda f: -f["puan"]) + sorted(indirimli_market, key=lambda f: -f["puan"])
-                  + sorted(aktuel, key=lambda f: f.get("bitis") or "")):
+        for f in eticaret + indirimli_market + aktuel:
             gruplar.setdefault(f["kaynak"], []).append(f)
         # Elle seçilen ürünlerde çeşit elemesi yok.
-        secimler = {k: _cesitli_sec(v, n, kaynak_siniri=n, aile_kontrol=not (k == "bim_indirim" or v[0]["tur"] == "eticaret"))
+        secimler = {k: _cesitli_sec(v, n, kaynak_siniri=n, aile_kontrol=v[0]["guven"] != "editor")
                     for k, v in gruplar.items()}
-        firma = _firma_sec(secimler, kv_al(c, "son_firma"))
+        firma = _firma_sec(secimler, kv_al(c, "son_firma"), _firma_son_tarihleri(c),
+                           (s.date() + timedelta(days=1)).isoformat())
         secim = secimler.get(firma, [])
         if firma == "migroskop":
             kapak_satirlari = ("MİGROSKOP'TA", "MONEY'Lİ", "FIRSATLAR")

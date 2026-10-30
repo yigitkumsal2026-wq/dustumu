@@ -129,6 +129,8 @@ yayin:
   eticaret_sadece_dogrulanmis: true
   # Aynı ürün en erken kaç gün sonra tekrar paylaşılabilir.
   tekrar_engel_gun: 14
+  # Bu kadar gün içinde paylaşılan ürün ailesi, marka ve ürün tipi sıranın gerisine düşer.
+  cesit_gun: 7
   # Gönderi başına hashtag sayısı (Instagram 3-5 öneriyor).
   hashtag_sayisi: 5
   # Her gönderi tek ürün değil, çok fırsatlı carousel (kaydırmalı) olsun (en az 3 aday varsa).
