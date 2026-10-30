@@ -15,13 +15,13 @@ import re
 import sqlite3
 from datetime import date, datetime, timedelta
 
-from . import captions, config, render
+from . import captions, config, reel, render
 from .calendar_tr import bu_hafta_market, tr_tarih, yaklasan_ozel_gunler
 from .db import kv_al, kv_yaz
 from .sources import KAYNAK_ADLARI
 
 log = logging.getLogger(__name__)
-FEED_TURLERI = ("tekli", "carousel", "takvim")
+FEED_TURLERI = ("tekli", "carousel", "takvim", "reel")
 MARKA_TIP_SINIRI = 2  # Bir gönderide aynı markadan/aynı tipten en fazla bu kadar ürün
 URUN_TIPLERI = {
     "deterjan": ("deterjan",), "deodorant": ("deodorant", "roll on", "roll-on"), "şampuan": ("şampuan",),
@@ -261,14 +261,32 @@ def planla(c: sqlite3.Connection, zorla: bool = False, bim_katalog: list[dict] |
             gorseller = [f"car_{damga}_0.jpg"]
             renk = int(kv_al(c, "kapak_renk", "0")) + 1  # her kapak bir sonraki renkte (0=sarı, ilk kapakta kullanıldı)
             kv_yaz(c, "kapak_renk", str(renk))
-            render.carousel_kapak(secim, f"{tr_tarih(s.date())} · {len(secim)} fırsat", _dosya(gorseller[0]), renk,
-                                  kapak_satirlari)
-            for i, f in enumerate(secim, 1):
-                ad = f"car_{damga}_{i}_{f['kod']}.jpg"
-                render.firsat_gorseli(f, _dosya(ad), reklam_degil=not aff)
-                gorseller.append(ad)
-            aciklama = captions.carousel(secim, f"{tr_tarih(s.date())} — {baslik}", aff)
-            yeni.append(_kayit(c, "carousel", secim, gorseller, aciklama, s))
+            reel_id = None
+            if y["reel_paylas"] and y["instagram_aktif"] and kv_al(c, "son_format") != "reel":
+                reel_secim = secim[:y["reel_urun_sayisi"]]
+                ad = f"reel_{damga}.mp4"
+                try:
+                    reel.uret(reel_secim, f"{tr_tarih(s.date())} · {len(reel_secim)} fırsat", kapak_satirlari, renk,
+                              _dosya(ad), reklam_degil=not aff)
+                    aciklama = captions.carousel(reel_secim, f"{tr_tarih(s.date())} — {baslik}", aff,
+                                                 "🔔 Takip et, düşen fiyatları kaçırma 👇")
+                    reel_id = _kayit(c, "reel", reel_secim, [ad], aciklama, s)
+                    secim = reel_secim
+                except Exception as e:  # video üretilemezse o tur carousel paylaşılır
+                    log.warning("Reel üretilemedi, carousel paylaşılacak: %s", e)
+            if reel_id:
+                yeni.append(reel_id)
+                kv_yaz(c, "son_format", "reel")
+            else:
+                render.carousel_kapak(secim, f"{tr_tarih(s.date())} · {len(secim)} fırsat", _dosya(gorseller[0]), renk,
+                                      kapak_satirlari)
+                for i, f in enumerate(secim, 1):
+                    ad = f"car_{damga}_{i}_{f['kod']}.jpg"
+                    render.firsat_gorseli(f, _dosya(ad), reklam_degil=not aff)
+                    gorseller.append(ad)
+                aciklama = captions.carousel(secim, f"{tr_tarih(s.date())} — {baslik}", aff)
+                yeni.append(_kayit(c, "carousel", secim, gorseller, aciklama, s))
+                kv_yaz(c, "son_format", "carousel")
             if y["hikaye_paylas"] and _bugun_sayisi(c, gun, ("hikaye",)) < y["gunluk_max_hikaye"]:
                 had = f"hik_{damga}_{secim[0]['kod']}.jpg"
                 render.firsat_gorseli(secim[0], _dosya(had), hikaye=True, reklam_degil=not aff)

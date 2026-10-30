@@ -109,7 +109,7 @@ form.satir{display:inline}
 {% if sekme=='gonderiler' %}
  <p class="ipucu">Üretilen gönderiler. Deneme modunda Instagram'a gitmez; burada nasıl görüneceğini incelersin. Carousel'de görseller yana kayar.</p>
  <div class="posts">{% for g in gonderiler %}<div class="post">
-  <div class="gorseller">{% for a in g.gorseller %}<img src="{{ url_for('gorsel', ad=a) }}" alt="" loading="lazy">{% endfor %}</div>
+  <div class="gorseller">{% for a in g.gorseller %}{% if a.endswith('.mp4') %}<video src="{{ url_for('gorsel', ad=a) }}" controls preload="none" style="width:100%"></video>{% else %}<img src="{{ url_for('gorsel', ad=a) }}" alt="" loading="lazy">{% endif %}{% endfor %}</div>
   <div class="ic"><span class="etiket {{ g.durum }}">{{ g.durum }}</span> <span class="etiket">{{ g.tur }}</span> <span class="ipucu">{{ g.planlanan[:16].replace('T',' ') }}</span>
   {% if g.hata %}<p style="color:var(--kir)">{{ g.hata }}</p>{% endif %}
   {% if g.aciklama %}<pre>{{ g.aciklama }}</pre>{% endif %}

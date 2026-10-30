@@ -23,7 +23,7 @@ def _yayinda_mi(url: str, sure: int = 240) -> bool:
     while time.time() - bas < sure:
         try:
             r = requests.head(url, timeout=15, allow_redirects=True)
-            if r.status_code == 200 and r.headers.get("content-type", "").startswith("image/"):
+            if r.status_code == 200 and r.headers.get("content-type", "").startswith(("image/", "video/")):
                 return True
         except requests.RequestException:
             pass
@@ -64,6 +64,8 @@ def bekleyenleri_yayinla(c) -> dict:
                 raise instagram.IGHata(f"Görsel henüz yayında değil: {urller[-1]}")
             if g["tur"] == "carousel":
                 ig_id = instagram.carousel_paylas(c, urller, g["aciklama"])
+            elif g["tur"] == "reel":
+                ig_id = instagram.reel_paylas(c, urller[0], g["aciklama"])
             elif g["tur"] == "hikaye":
                 ig_id = instagram.hikaye_paylas(c, urller[0])
             else:

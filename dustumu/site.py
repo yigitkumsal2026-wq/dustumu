@@ -93,7 +93,8 @@ def hazir_sayfasi(c, gun: int = 3) -> None:
     sinir = (config.simdi() - timedelta(days=gun)).isoformat(timespec="seconds")
     gonderiler = []
     for g in c.execute("""SELECT id, tur, gorseller, aciklama, planlanan FROM gonderiler
-                          WHERE durum IN ('planlandi','deneme') AND planlanan>=? ORDER BY planlanan DESC LIMIT 20""",
+                          WHERE durum IN ('planlandi','deneme') AND tur!='reel' AND planlanan>=?
+                          ORDER BY planlanan DESC LIMIT 20""",
                        (sinir,)):
         gorseller = [a for a in json.loads(g["gorseller"]) if (config.GORSEL / a).exists()]
         if gorseller:
@@ -112,6 +113,7 @@ def hazir_sayfasi(c, gun: int = 3) -> None:
 def gorselleri_temizle(gun: int = 10) -> None:
     """Instagram görseli yayın anında kopyalar; eski dosyaları tutmaya gerek yok."""
     sinir = time.time() - gun * 86400
-    for p in config.GORSEL.glob("*.jpg"):
-        if p.stat().st_mtime < sinir:
-            p.unlink(missing_ok=True)
+    for desen in ("*.jpg", "*.mp4"):
+        for p in config.GORSEL.glob(desen):
+            if p.stat().st_mtime < sinir:
+                p.unlink(missing_ok=True)

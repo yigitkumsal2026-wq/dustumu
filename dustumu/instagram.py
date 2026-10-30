@@ -115,8 +115,8 @@ def _hazir_olmasini_bekle(c, kap_id: str, sure: int = 120) -> None:
     raise IGHata("Medya işleme zaman aşımı")
 
 
-def _yayinla(c, kap_id: str) -> str:
-    _hazir_olmasini_bekle(c, kap_id)
+def _yayinla(c, kap_id: str, sure: int = 120) -> str:
+    _hazir_olmasini_bekle(c, kap_id, sure)
     return _istek(c, "POST", f"{_kullanici()}/media_publish", creation_id=kap_id)["id"]
 
 
@@ -134,6 +134,12 @@ def carousel_paylas(c, gorsel_urller: list[str], aciklama: str) -> str:
     kap = _istek(c, "POST", f"{_kullanici()}/media", media_type="CAROUSEL",
                  children=",".join(cocuklar), caption=aciklama)["id"]
     return _yayinla(c, kap)
+
+
+def reel_paylas(c, video_url: str, aciklama: str) -> str:
+    kap = _istek(c, "POST", f"{_kullanici()}/media", media_type="REELS", video_url=video_url, caption=aciklama,
+                 share_to_feed="true")["id"]
+    return _yayinla(c, kap, sure=420)  # video işleme fotoğraftan uzun sürer
 
 
 def hikaye_paylas(c, gorsel_url: str) -> str:

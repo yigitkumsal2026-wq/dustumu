@@ -98,8 +98,8 @@ def tekli(f: dict, affiliate: bool = False) -> str:
     return "\n".join(satirlar)
 
 
-def carousel(firsatlar: list[dict], baslik: str, affiliate: bool = False) -> str:
-    satirlar = [f"🛒 {baslik}", f"Kaydır, {len(firsatlar)} fırsatın hepsini gör 👉", ""]
+def carousel(firsatlar: list[dict], baslik: str, affiliate: bool = False, cagri: str | None = None) -> str:
+    satirlar = [f"🛒 {baslik}", cagri or f"Kaydır, {len(firsatlar)} fırsatın hepsini gör 👉", ""]
     for f in firsatlar:
         m = KAYNAK_ADLARI.get(f["kaynak"], f["kaynak"])
         if f["guven"] == "aktuel":
