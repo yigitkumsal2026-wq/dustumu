@@ -138,7 +138,7 @@ def carousel_paylas(c, gorsel_urller: list[str], aciklama: str) -> str:
 
 def reel_paylas(c, video_url: str, aciklama: str) -> str:
     kap = _istek(c, "POST", f"{_kullanici()}/media", media_type="REELS", video_url=video_url, caption=aciklama,
-                 share_to_feed="true")["id"]
+                 share_to_feed="true", thumb_offset=1000)["id"]  # 1. saniye: kapak yazısı oturmuş
     return _yayinla(c, kap, sure=420)  # video işleme fotoğraftan uzun sürer
 
 

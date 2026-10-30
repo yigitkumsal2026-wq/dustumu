@@ -265,9 +265,10 @@ def planla(c: sqlite3.Connection, zorla: bool = False, bim_katalog: list[dict] |
             if y["reel_paylas"] and y["instagram_aktif"] and kv_al(c, "son_format") != "reel":
                 reel_secim = secim[:y["reel_urun_sayisi"]]
                 ad = f"reel_{damga}.mp4"
+                stil_no = int(kv_al(c, "reel_stil", "-1")) + 1  # her Reels bir sonraki görünümde
                 try:
-                    reel.uret(reel_secim, f"{tr_tarih(s.date())} · {len(reel_secim)} fırsat", kapak_satirlari, renk,
-                              _dosya(ad), reklam_degil=not aff)
+                    reel.uret(reel_secim, kapak_satirlari, _dosya(ad), reklam_degil=not aff, stil_no=stil_no)
+                    kv_yaz(c, "reel_stil", str(stil_no))
                     aciklama = captions.carousel(reel_secim, f"{tr_tarih(s.date())} — {baslik}", aff,
                                                  "🔔 Takip et, düşen fiyatları kaçırma 👇")
                     reel_id = _kayit(c, "reel", reel_secim, [ad], aciklama, s)

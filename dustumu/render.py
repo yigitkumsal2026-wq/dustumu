@@ -173,15 +173,14 @@ def son_gun(f: dict) -> str | None:
 
 
 # ------------------------------------------------------------------ tekli fırsat
-def firsat_gorseli(f: dict, hedef: Path, hikaye: bool = False, reklam_degil: bool = True, reel: bool = False) -> Path:
-    """f: fırsat sözlüğü (kod, ad, fiyat, eski_fiyat, indirim, guven, kaynak, gorsel, gecerlilik).
-    reel: hikâye boyu, ama içerik yukarıda; Reels'in alttaki açıklama ve sağdaki düğmeleri fiyatı örtmesin."""
-    yuk = SH if hikaye or reel else H
+def firsat_gorseli(f: dict, hedef: Path, hikaye: bool = False, reklam_degil: bool = True) -> Path:
+    """f: fırsat sözlüğü (kod, ad, fiyat, eski_fiyat, indirim, guven, kaynak, gorsel, gecerlilik)."""
+    yuk = SH if hikaye else H
     tema = TEMALAR[f["kod"] % len(TEMALAR)]
     img = _gradyan(W, yuk, tema["ust"], tema["alt"]).convert("RGBA")
     d = ImageDraw.Draw(img)
     pad = 60
-    ust = 90 if reel else 160 if hikaye else 48
+    ust = 160 if hikaye else 48
 
     # Üst satır: logo + mağaza rozeti
     _logo(d, pad, ust, tema["yazi"], 58, tema["vurgu"] if tema["ust"] != "#FF3B30" else "#FFD60A")
@@ -193,7 +192,7 @@ def firsat_gorseli(f: dict, hedef: Path, hikaye: bool = False, reklam_degil: boo
 
     # Ürün kartı
     kart_y = ust + 102
-    kart_h = 760 if reel else 900 if hikaye else 680
+    kart_h = 900 if hikaye else 680
     _yuvarlak_kutu(img, (pad, kart_y, W - pad, kart_y + kart_h), 44, "#FFFFFF")
     d = ImageDraw.Draw(img)
     # Ürün, sağ üstteki çıkartmaya çarpmasın diye biraz sola ve aşağı yerleşir.
@@ -276,7 +275,7 @@ def firsat_gorseli(f: dict, hedef: Path, hikaye: bool = False, reklam_degil: boo
     d.text((x_yeni, taban - bb[3]), yeni, font=fyeni, fill="#FFFFFF")
 
     # En alt: çağrı
-    alt_y = panel_alt + (40 if hikaye or reel else 24)
+    alt_y = panel_alt + (40 if hikaye else 24)
     fcta = font("black", 36)
     cta = "REKLAM DEĞİLDİR  •  KAYDET" if reklam_degil else "KAYDET  •  ARKADAŞINA GÖNDER"
     d.text(((W - d.textlength(cta, font=fcta)) / 2, alt_y), cta, font=fcta, fill=tema["yazi"])
@@ -302,56 +301,38 @@ KAPAK_TEMALAR = [
 
 
 def carousel_kapak(firsatlar: list[dict], baslik_tarih: str, hedef: Path, renk: int = 0,
-                   satirlar: tuple[str, str, str] = ("BUGÜN", "MARKETTE", "NE DÜŞTÜ?"), reel: bool = False) -> Path:
+                   satirlar: tuple[str, str, str] = ("BUGÜN", "MARKETTE", "NE DÜŞTÜ?")) -> Path:
     tema = KAPAK_TEMALAR[renk % len(KAPAK_TEMALAR)]
-    img = _gradyan(W, SH if reel else H, tema["ust"], tema["alt"]).convert("RGBA")
+    img = _gradyan(W, H, tema["ust"], tema["alt"]).convert("RGBA")
     d = ImageDraw.Draw(img)
     pad = 64
-    o = 130 if reel else 0  # Reels: içerik ekranın ortasına yakın, profil ızgarasındaki kırpmadan etkilenmez
-    _logo(d, pad, 56 + o, tema["yazi"], 58, tema["vurgu"])
+    _logo(d, pad, 56, tema["yazi"], 58, tema["vurgu"])
     for (y, metin), dolgu in zip(zip((190, 350, 510), satirlar), (tema["yazi"], tema["yazi"], tema["vurgu"])):
-        d.text((pad, y + o), metin, font=_sigdir(d, metin, "anton", 150, W - pad * 2), fill=dolgu)
-    d.text((pad, 722 + o), baslik_tarih.replace("i", "İ").upper(), font=font("black", 40), fill=tema["yazi"])
+        d.text((pad, y), metin, font=_sigdir(d, metin, "anton", 150, W - pad * 2), fill=dolgu)
+    d.text((pad, 722), baslik_tarih.replace("i", "İ").upper(), font=font("black", 40), fill=tema["yazi"])
 
     # Küçük ürün önizlemeleri
     n = min(3, len(firsatlar))
     kw = (W - pad * 2 - 30 * (n - 1)) // max(n, 1)
     for i, f in enumerate(firsatlar[:n]):
         x = pad + i * (kw + 30)
-        _yuvarlak_kutu(img, (x, 780 + o, x + kw, 780 + o + kw), 32, "#FFFFFF")
+        _yuvarlak_kutu(img, (x, 780, x + kw, 780 + kw), 32, "#FFFFFF")
         u = _urun_gorseli(f.get("gorsel"), kw - 50, kw - 50)
         if u:
-            img.alpha_composite(u, (x + (kw - u.width) // 2, 780 + o + (kw - u.height) // 2))
+            img.alpha_composite(u, (x + (kw - u.width) // 2, 780 + (kw - u.height) // 2))
         d = ImageDraw.Draw(img)
         if f["guven"] != "aktuel":
-            _rozet(d, x + 14, 794 + o, f"%{int(f['indirim'])}", "#E63946", "#FFFFFF", font("anton", 40), pad=(16, 6))
+            _rozet(d, x + 14, 794, f"%{int(f['indirim'])}", "#E63946", "#FFFFFF", font("anton", 40), pad=(16, 6))
 
     marketler = list(dict.fromkeys(f["kaynak"] for f in firsatlar))
     x = pad
     for m in marketler[:5]:
         r = KAYNAK_RENK.get(m, KAYNAK_RENK["diger"])
-        k = _rozet(d, x, 1150 + o, KAYNAK_ADLARI.get(m, m), r[0], r[1], font("black", 34))
+        k = _rozet(d, x, 1150, KAYNAK_ADLARI.get(m, m), r[0], r[1], font("black", 34))
         x = k[2] + 16
-    if not reel:
-        f_k = font("black", 40)
-        kay = "KAYDIR  >>>"
-        d.text((W - pad - d.textlength(kay, font=f_k), 1240), kay, font=f_k, fill=tema["yazi"])
-    img.convert("RGB").save(hedef, "JPEG", quality=92, optimize=True)
-    return hedef
-
-
-# ------------------------------------------------------------------ Reels son karesi
-def reel_son_kare(hedef: Path, renk: int = 0, reklam_degil: bool = True) -> Path:
-    tema = KAPAK_TEMALAR[renk % len(KAPAK_TEMALAR)]
-    img = _gradyan(W, SH, tema["ust"], tema["alt"]).convert("RGBA")
-    d = ImageDraw.Draw(img)
-    pad = 64
-    _logo(d, pad, 186, tema["yazi"], 58, tema["vurgu"])
-    for y, metin, dolgu in ((400, "DÜŞEN FİYATI", tema["yazi"]), (570, "KAÇIRMA", tema["yazi"]), (800, "TAKİP ET", tema["vurgu"])):
-        d.text((pad, y), metin, font=_sigdir(d, metin, "anton", 170, W - pad * 2), fill=dolgu)
-    d.text((pad, 1020), "@" + config.ayarlar()["marka"]["instagram_kullanici"], font=font("black", 56), fill=tema["yazi"])
-    alt = "REKLAM DEĞİLDİR  •  KAYDET" if reklam_degil else "KAYDET  •  ARKADAŞINA GÖNDER"
-    d.text((pad, 1130), alt, font=font("black", 36), fill=tema["yazi"])
+    f_k = font("black", 40)
+    kay = "KAYDIR  >>>"
+    d.text((W - pad - d.textlength(kay, font=f_k), 1240), kay, font=f_k, fill=tema["yazi"])
     img.convert("RGB").save(hedef, "JPEG", quality=92, optimize=True)
     return hedef
 
