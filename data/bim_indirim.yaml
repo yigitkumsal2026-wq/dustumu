@@ -1,0 +1,95 @@
+# BİM indirim afişi: fiyatlar yalnızca görselde olduğu için elle okunur. Dönem bitince kendiliğinden düşer.
+donem: 30 Ekim-2 Kasım
+bitis: '2026-11-02'
+afis: https://www.bim.com.tr/Categories/680/afisler.aspx?top=1&Bim_AfisKey=1438
+urunler:
+- kod: blade
+  ad: Blade Deodorant 150 ml
+  fiyat: 119
+  eski_fiyat: 245
+  gorsel: https://raw.githubusercontent.com/yigitkumsal2026-wq/dustumu/main/data/afis/blade.jpg
+- kod: axe
+  ad: Axe Erkek Deodorant 150 ml
+  fiyat: 159
+  eski_fiyat: 319
+  gorsel: https://raw.githubusercontent.com/yigitkumsal2026-wq/dustumu/main/data/afis/axe.jpg
+- kod: emotion
+  ad: Emotion Deodorant 150 ml
+  fiyat: 119
+  eski_fiyat: 245
+  gorsel: https://raw.githubusercontent.com/yigitkumsal2026-wq/dustumu/main/data/afis/emotion.jpg
+- kod: nivea-rollon-k
+  ad: Nivea Kadın Roll-On 25 ml
+  fiyat: 70
+  eski_fiyat: 140
+  gorsel: https://raw.githubusercontent.com/yigitkumsal2026-wq/dustumu/main/data/afis/nivea-rollon-k.jpg
+- kod: nivea-rollon-e
+  ad: Nivea Erkek Roll-On 25 ml
+  fiyat: 70
+  eski_fiyat: 140
+  gorsel: https://raw.githubusercontent.com/yigitkumsal2026-wq/dustumu/main/data/afis/nivea-rollon-e.jpg
+- kod: rexona-k
+  ad: Rexona Kadın Deodorant Çeşitleri 150 ml
+  fiyat: 144.5
+  eski_fiyat: 289
+  gorsel: https://raw.githubusercontent.com/yigitkumsal2026-wq/dustumu/main/data/afis/rexona-k.jpg
+- kod: nivea-k
+  ad: Nivea Kadın Deodorant Çeşitleri 150 ml
+  fiyat: 145
+  eski_fiyat: 290
+  gorsel: https://raw.githubusercontent.com/yigitkumsal2026-wq/dustumu/main/data/afis/nivea-k.jpg
+- kod: rexona-e
+  ad: Rexona Erkek Deodorant Çeşitleri 150 ml
+  fiyat: 144.5
+  eski_fiyat: 289
+  gorsel: https://raw.githubusercontent.com/yigitkumsal2026-wq/dustumu/main/data/afis/rexona-e.jpg
+- kod: nivea-e
+  ad: Nivea Erkek Deodorant Çeşitleri 150 ml
+  fiyat: 145
+  eski_fiyat: 290
+  gorsel: https://raw.githubusercontent.com/yigitkumsal2026-wq/dustumu/main/data/afis/nivea-e.jpg
+- kod: dogadan
+  ad: Doğadan Bitki Çayı Çeşitleri 20'li
+  fiyat: 69
+  eski_fiyat: 110
+  gorsel: https://raw.githubusercontent.com/yigitkumsal2026-wq/dustumu/main/data/afis/dogadan.jpg
+- kod: fileto
+  ad: Piliç Çıtır Kıtır Fileto 700 g
+  fiyat: 149
+  eski_fiyat: 239
+  gorsel: https://raw.githubusercontent.com/yigitkumsal2026-wq/dustumu/main/data/afis/fileto.jpg
+- kod: rondo
+  ad: Ülker Rondo Kremalı Muzlu Bisküvi 8x61 g
+  fiyat: 69
+  eski_fiyat: 99
+  gorsel: https://raw.githubusercontent.com/yigitkumsal2026-wq/dustumu/main/data/afis/rondo.jpg
+- kod: kavala
+  ad: Lezzethane Bademli Kavala Kurabiyesi 290 g
+  fiyat: 65
+  eski_fiyat: 89
+  gorsel: https://raw.githubusercontent.com/yigitkumsal2026-wq/dustumu/main/data/afis/kavala.jpg
+- kod: jacobs
+  ad: Jacobs Filtre Kahve Uganda & Kenya 200 g
+  fiyat: 189
+  eski_fiyat: 249
+  gorsel: https://raw.githubusercontent.com/yigitkumsal2026-wq/dustumu/main/data/afis/jacobs.jpg
+- kod: sarimsak
+  ad: Sarımsak (kg)
+  fiyat: 135
+  eski_fiyat: 175
+  gorsel: https://raw.githubusercontent.com/yigitkumsal2026-wq/dustumu/main/data/afis/sarimsak.jpg
+- kod: sucuk
+  ad: Dana Sucuk 450 g
+  fiyat: 299
+  eski_fiyat: 379
+  gorsel: https://raw.githubusercontent.com/yigitkumsal2026-wq/dustumu/main/data/afis/sucuk.jpg
+- kod: cokokrem
+  ad: Çokokrem Kakaolu Fındık Kreması 950 g
+  fiyat: 189
+  eski_fiyat: 240
+  gorsel: https://raw.githubusercontent.com/yigitkumsal2026-wq/dustumu/main/data/afis/cokokrem.jpg
+- kod: armut
+  ad: Deveci Armut (kg)
+  fiyat: 59
+  eski_fiyat: 75
+  gorsel: https://raw.githubusercontent.com/yigitkumsal2026-wq/dustumu/main/data/afis/armut.jpg

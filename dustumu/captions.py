@@ -65,6 +65,9 @@ REKLAM_DEGIL = "📢 Reklam değildir. Hiçbir markayla iş birliğimiz yok, üc
 
 
 def _money_satiri(firsatlar: list[dict]) -> list[str]:
+    afis = next((f.get("gecerlilik") for f in firsatlar if f["kaynak"] == "bim_indirim"), None)
+    if afis:
+        return [f"📋 BİM indirim afişi {afis}: oranlar afişteki eski fiyata göredir, marka ve stok mağazaya göre değişebilir."]
     donem = next((f.get("gecerlilik") for f in firsatlar if f["kaynak"] == "migroskop"), None)
     if not donem:
         return []

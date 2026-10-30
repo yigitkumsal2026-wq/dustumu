@@ -172,7 +172,7 @@ def firsatlari_guncelle(c: sqlite3.Connection, bugun: date) -> dict:
                      "aciklama": f"BİM Aktüel • {u['gecerlilik']}"}
             istatistik["aktuel"] += 1
         else:
-            manuel = u["kaynak"] not in ("n11", "migros", "migroskop", "sok", "rossmann", "gratis")
+            manuel = u["kaynak"] not in ("n11", "migros", "migroskop", "sok", "rossmann", "gratis", "bim_indirim")
             sonuc = degerlendir(gecmis, u["fiyat"], u["liste_fiyat"], u["tur"], manuel)
         if sonuc["karar"] != "firsat":
             if sonuc.get("neden") == "sahte":

@@ -122,6 +122,26 @@ def _cesitli_sec(adaylar: list[dict], n: int, haric: list[dict] | None = None,
     return secilen
 
 
+def _yer_eki(ad: str) -> str:
+    """'BİM' -> "BİM'de", 'Migros' -> "Migros'ta", 'Gratis' -> "Gratis'te", 'n11' -> "n11'de"."""
+    kucuk = ad.replace("I", "ı").replace("İ", "i").lower()
+    unlu = next((h for h in reversed(kucuk) if h in "aıoueiöü"), "e")
+    # Sayıyla bitenler "bir" okunur (n11, A101).
+    if kucuk[-1].isdigit():
+        unlu = "e"
+    a = "a" if unlu in "aıou" else "e"
+    return f"{ad}'{'t' if kucuk[-1] in 'fstkçşhp' else 'd'}{a}"
+
+
+def _firma_sec(gruplar: dict[str, list[dict]], son: str | None) -> str | None:
+    """En az 3 adayı olan firmalardan bir önceki gönderininki hariç, bitişi en yakın olanı seçer."""
+    uygun = {k: v for k, v in gruplar.items() if len(v) >= 3}
+    adaylar = [k for k in uygun if k != son] or list(uygun)
+    if not adaylar:
+        return None
+    return min(adaylar, key=lambda k: (min(f.get("bitis") or "9" for f in uygun[k]), -uygun[k][0]["puan"]))
+
+
 def planla(c: sqlite3.Connection, zorla: bool = False, bim_katalog: list[dict] | None = None) -> list[int]:
     """Bu çalıştırmada paylaşılacak gönderileri oluşturur (görselleriyle). Gönderi id'lerini döner."""
     y = config.ayarlar()["yayin"]
@@ -156,36 +176,25 @@ def planla(c: sqlite3.Connection, zorla: bool = False, bim_katalog: list[dict] |
             eticaret = [f for f in eticaret if f["guven"] in ("dogrulandi", "editor")]
         n = y["carousel_urun_sayisi"]
 
-        # 2) Çok fırsatlı carousel. Online (Trendyol linkleri vb.) en az 3 birikince kendi gönderisinde
-        #    toplanır; yoksa market indirimleri + yaklaşan aktüeller. Yeterli aday yoksa tekli.
-        online = sorted(eticaret, key=lambda f: -f["puan"])
-        if len(online) >= 3:
-            secim = _cesitli_sec(online, n, kaynak_siniri=n, aile_kontrol=False)
-            magazalar = {f["kaynak"] for f in secim}
-            if len(magazalar) == 1:
-                yer = KAYNAK_ADLARI.get(next(iter(magazalar)), "İnternet")
-                ek = "te" if yer.lower().endswith("s") else "de" if yer.lower().endswith(("11", "e", "i")) else "da"
-                yer_ek = f"{yer}'{ek}"
-            else:
-                yer_ek = "İnternette"
-            kapak_satirlari = ("BUGÜN", yer_ek.replace("i", "İ").upper(), "NE DÜŞTÜ?")
-            baslik = f"Bugün {yer_ek} ne düştü?"
-        elif sum(f["kaynak"] == "migroskop" for f in indirimli_market) >= 3:
-            # Migroskop kataloğu bitene kadar kendi gönderisinde toplanır.
-            katalog = sorted((f for f in indirimli_market if f["kaynak"] == "migroskop"), key=lambda f: -f["puan"])
-            secim = _cesitli_sec(katalog, n, kaynak_siniri=n)
+        # 2) Çok fırsatlı carousel: her gönderi tek firmadan. Yeterli aday yoksa tekli.
+        gruplar: dict[str, list[dict]] = {}
+        for f in (sorted(eticaret, key=lambda f: -f["puan"]) + sorted(indirimli_market, key=lambda f: -f["puan"])
+                  + sorted(aktuel, key=lambda f: f.get("bitis") or "")):
+            gruplar.setdefault(f["kaynak"], []).append(f)
+        # Elle seçilen ürünlerde çeşit elemesi yok.
+        secimler = {k: _cesitli_sec(v, n, kaynak_siniri=n, aile_kontrol=not (k == "bim_indirim" or v[0]["tur"] == "eticaret"))
+                    for k, v in gruplar.items()}
+        firma = _firma_sec(secimler, kv_al(c, "son_firma"))
+        secim = secimler.get(firma, [])
+        if firma == "migroskop":
             kapak_satirlari = ("MİGROSKOP'TA", "MONEY'Lİ", "FIRSATLAR")
             baslik = f"Migroskop'ta Money'li fırsatlar ({secim[0]['gecerlilik']})"
-        else:
-            indirimli = sorted(indirimli_market, key=lambda f: -f["puan"])
-            secim = _cesitli_sec(indirimli, n - 2)
-            secim += _cesitli_sec(sorted(aktuel, key=lambda f: f.get("bitis") or ""), n - len(secim), secim)
-            if len(secim) < n:
-                secim += _cesitli_sec(indirimli, n - len(secim), secim)
-            kapak_satirlari = ("BUGÜN", "MARKETTE", "NE DÜŞTÜ?")
-            baslik = "Bugün ne düştü?"
-        secim = secim[:n]
+        elif firma:
+            yer_ek = _yer_eki(KAYNAK_ADLARI.get(firma, firma))
+            kapak_satirlari = ("BUGÜN", yer_ek.replace("i", "İ").upper(), "NE DÜŞTÜ?")
+            baslik = f"Bugün {yer_ek} ne düştü?"
         if y["market_carousel"] and len(secim) >= 3:
+            kv_yaz(c, "son_firma", firma)
             aff = _affiliate_mi(secim)
             gorseller = [f"car_{damga}_0.jpg"]
             renk = int(kv_al(c, "kapak_renk", "0")) + 1  # her kapak bir sonraki renkte (0=sarı, ilk kapakta kullanıldı)

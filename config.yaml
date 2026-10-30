@@ -65,6 +65,9 @@ kaynaklar:
   # Migroskop dijital kataloğu: dönem ve bitiş tarihi katalogdan okunur.
   migroskop:
     aktif: true
+  # BİM indirim afişi: data/bim_indirim.yaml'dan okunur.
+  bim_indirim:
+    aktif: true
   # Kozmetik mağazaları: indirim fiyat geçmişiyle doğrulanır (ilk günler paylaşım çıkmaz).
   rossmann:
     aktif: true

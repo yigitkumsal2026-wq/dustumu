@@ -258,6 +258,8 @@ def firsat_gorseli(f: dict, hedef: Path, hikaye: bool = False, reklam_degil: boo
             ust_not = "Money'siz fiyat"
             fm = font("black", 30)
             d.text((W - ic - d.textlength("MONEY'Lİ FİYAT", font=fm), taban - bb[3] - 38), "MONEY'Lİ FİYAT", font=fm, fill=acik_renk)
+        elif f["kaynak"] == "bim_indirim":
+            ust_not = "afişteki eski fiyat"
         else:
             ust_not = "30 günün en düşük fiyatı" if f["guven"] == "dogrulandi" else "liste fiyatı"
         d.text((ic, ey + ebb[1] - 40), ust_not, font=font("semi", 26), fill="#9CA3AF")
