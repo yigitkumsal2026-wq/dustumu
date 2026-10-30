@@ -164,7 +164,8 @@ def planla(c: sqlite3.Connection, zorla: bool = False, bim_katalog: list[dict] |
             magazalar = {f["kaynak"] for f in secim}
             if len(magazalar) == 1:
                 yer = KAYNAK_ADLARI.get(next(iter(magazalar)), "İnternet")
-                yer_ek = f"{yer}'{'de' if yer.lower().endswith(('11', 'e', 'i')) else 'da'}"
+                ek = "te" if yer.lower().endswith("s") else "de" if yer.lower().endswith(("11", "e", "i")) else "da"
+                yer_ek = f"{yer}'{ek}"
             else:
                 yer_ek = "İnternette"
             kapak_satirlari = ("BUGÜN", yer_ek.replace("i", "İ").upper(), "NE DÜŞTÜ?")

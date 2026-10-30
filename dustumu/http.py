@@ -16,6 +16,8 @@ log = logging.getLogger(__name__)
 
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/130.0 Safari/537.36")
+# Yeni kaynaklar kendini tarayıcı gibi değil, bot olarak tanıtır.
+BOT_BASLIK = {"User-Agent": "DustuMuBot/1.0 (indirim takip botu)"}
 
 _oturum = requests.Session()
 _oturum.headers.update({"User-Agent": UA, "Accept-Language": "tr-TR,tr;q=0.9,en;q=0.5"})

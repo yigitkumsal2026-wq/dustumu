@@ -62,6 +62,17 @@ kaynaklar:
     sayfalar: ["/indirimli-urunler-cms-pl1"]
   bim:
     aktif: true
+  # Kozmetik mağazaları: indirim fiyat geçmişiyle doğrulanır (ilk günler paylaşım çıkmaz).
+  rossmann:
+    aktif: true
+    sayfalar: ["/firsat-urunleri", "/makyaj"]
+    sayfa_basina_derinlik: 5
+    sayfa_basina_bekleme_sn: 4
+  gratis:
+    aktif: true
+    sayfalar: ["/makyaj-c-501"]
+    sayfa_basina_derinlik: 5
+    sayfa_basina_bekleme_sn: 4
   # Trendyol / Hepsiburada / Amazon / A101 bot koruması kullanıyor;
   # bunları panelden ya da data/manuel_firsatlar.yaml dosyasından ekle.
   manuel:
