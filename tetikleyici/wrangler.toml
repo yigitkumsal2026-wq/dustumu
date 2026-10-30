@@ -1,0 +1,8 @@
+name = "dustumu-tetikleyici"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+# Dışarıya açık adres yok; Worker yalnızca zamanlayıcıyla çalışır.
+workers_dev = false
+
+[triggers]
+crons = ["7,37 5-20 * * *"]   # bot.yml ile aynı: UTC 05-20 = İstanbul 08:00-23:59

@@ -3,3 +3,4 @@ durum/
 __pycache__/
 *.pyc
 .venv/
+.wrangler/
