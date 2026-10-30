@@ -10,4 +10,64 @@
 #     gorsel: "https://cdn.dsmcdn.com/....jpg"
 #     bitis: 2026-11-30
 #     affiliate: true
-firsatlar: []
+firsatlar:
+- ad: KIKO Glossy Lip Set - Dudak Parlatıcısı Seti
+  url: https://www.trendyol.com/kiko/glossy-lip-set-dudak-parlaticisi-seti-p-307859093?boutiqueId=61&merchantId=387700
+  kaynak: trendyol
+  kod: 628a51ade7
+  fiyat: 1598.0
+  eski_fiyat: 3197.0
+  gorsel: https://cdn.dsmcdn.com/ty1000460/product/media/images/prod/PIM/20261020/06/dc693424-e825-49b8-9fc5-8f3d84f74cc3/1_org_zoom.jpg
+- ad: KIKO Ruj - Unlımıted Double Touch - 103 Natural Rose - Uzun Süre Kalıcı Parlak
+    / Mat Likit Lipstick
+  url: https://www.trendyol.com/kiko/ruj-unlimited-double-touch-103-natural-rose-uzun-sure-kalici-parlak-mat-likit-lipstick-p-4360126?boutiqueId=61&merchantId=387700
+  kaynak: trendyol
+  kod: cf4946df90
+  fiyat: 839.0
+  eski_fiyat: 1199.0
+  gorsel: https://cdn.dsmcdn.com/ty1000461/product/media/images/prod/PIM/20261020/06/9840f561-c7fc-45ce-b2ee-ad3f8f5050f5/1_org_zoom.jpg
+- ad: KIKO Makyaj Çantası - Mini Pochette
+  url: https://www.trendyol.com/kiko/makyaj-cantasi-mini-pochette-p-104148108?boutiqueId=61&merchantId=387700
+  kaynak: trendyol
+  kod: 99c74ae59e
+  fiyat: 419.0
+  eski_fiyat: 599.0
+  gorsel: https://cdn.dsmcdn.com/ty1335/product/media/images/prod/QC/20240527/23/c30859c2-2289-37f6-861e-ed89e9c8d329/1_org_zoom.jpg
+- ad: KIKO Makyaj Fırçaları - Travel Brush Set
+  url: https://www.trendyol.com/kiko/makyaj-fircalari-travel-brush-set-p-1088574366?boutiqueId=61&merchantId=387700
+  kaynak: trendyol
+  kod: 0b07e821f5
+  fiyat: 1049.0
+  eski_fiyat: 1499.0
+  gorsel: https://cdn.dsmcdn.com/ty1812/prod/QC_PREP/20260120/15/129de696-66fe-3541-84d6-86013619fe74/1_org_zoom.jpg
+- ad: KIKO ALLIK - Unlimited Blush - 03 Golden Coral
+  url: https://www.trendyol.com/kiko/allik-unlimited-blush-03-golden-coral-p-927561029?boutiqueId=61&merchantId=387700
+  kaynak: trendyol
+  kod: c7bb7e8c4d
+  fiyat: 909.0
+  eski_fiyat: 1299.0
+  gorsel: https://cdn.dsmcdn.com/ty1664/prod/QC/20250415/11/25a68ceb-31a3-3053-b51d-a5bced9ed002/1_org_zoom.jpg
+- ad: KIKO Kontür-Sculpting Touch Creamy Stick Contour-201 Chocolate-Yüz Hatlarını
+    Belirginleştiren Kremsi
+  url: https://www.trendyol.com/kiko/kontur-sculpting-touch-creamy-stick-contour-201-chocolate-yuz-hatlarini-belirginlestiren-kremsi-p-899596394?boutiqueId=61&merchantId=387700
+  kaynak: trendyol
+  kod: fc6615b8b0
+  fiyat: 699.0
+  eski_fiyat: 1399.0
+  gorsel: https://cdn.dsmcdn.com/ty1000460/product/media/images/prod/PIM/20261020/06/2f83de2f-f0f0-4ba1-81c7-450e59f783f9/1_org_zoom.jpg
+- ad: KIKO Dudak Parlatıcısı-3D Hydra Lip Gloss Limited Edition-44 Disruptive Brown-Besleyici
+    ve Nemlendirici
+  url: https://www.trendyol.com/kiko/dudak-parlaticisi-3d-hydra-lip-gloss-limited-edition-44-disruptive-brown-besleyici-ve-nemlendirici-p-767447481?boutiqueId=61&merchantId=387700
+  kaynak: trendyol
+  kod: 11d683d024
+  fiyat: 599.0
+  eski_fiyat: 1199.0
+  gorsel: https://cdn.dsmcdn.com/ty1000461/product/media/images/prod/PIM/20261020/06/5e79f311-0c91-4172-b843-a544250322f5/1_org_zoom.jpg
+- ad: KIKO Göz Farı Paleti - New Glamour Multi Finish Eyeshadow Palette - 02 Sunset
+    Vibes -Yüksek Pigmentli
+  url: https://www.trendyol.com/kiko/goz-fari-paleti-new-glamour-multi-finish-eyeshadow-palette-02-sunset-vibes-yuksek-pigmentli-p-838175306?boutiqueId=61&merchantId=387700
+  kaynak: trendyol
+  kod: d99f1b4dc7
+  fiyat: 1259.0
+  eski_fiyat: 1799.0
+  gorsel: https://cdn.dsmcdn.com/ty1654/prod/QC/20250327/14/adbf50c7-695e-3a2a-b126-e6bebdd797fa/1_org_zoom.jpg
