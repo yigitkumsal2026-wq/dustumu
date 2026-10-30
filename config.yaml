@@ -137,7 +137,7 @@ yayin:
   market_carousel: true
   carousel_urun_sayisi: 9   # Instagram API sınırı 10 görsel: kapak + 9 ürün (en fazla)
   # Reels ve carousel sırayla paylaşılır (takip etmeyenlere asıl Reels ulaşır).
-  reel_paylas: true
+  reel_paylas: false
   reel_urun_sayisi: 5       # Kapak + 5 ürün + takip çağrısı: yaklaşık 15 saniye
   # Her pazartesi "Bu hafta market indirim günleri" takvim gönderisi.
   haftalik_takvim_gonderisi: true
